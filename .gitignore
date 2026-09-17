@@ -41,10 +41,6 @@ data/cache/
 *.sqlite3
 *.db
 
-# Local documentation / presentation drafts
-*.md
-*.ppt
-*.pptx
 
 # Agent & Workspace internal artifacts
 .agents/venv/
