@@ -166,7 +166,7 @@ class RealTimeVLMAgent:
             sar_data=sar_data,
         )
         if ollama_answer:
-            return ollama_answer, f"Qwen2.5-3B (Local Ollama / MPS)", None, "ollama_qwen2.5_3b"
+            return ollama_answer, "Qwen2.5-3B (Local Ollama / MPS)", None, "ollama_qwen2.5_3b"
         return None, None, None, None
 
     @classmethod
@@ -208,7 +208,7 @@ class RealTimeVLMAgent:
             # Provenance of the imagery being analyzed (real acquisition vs demo raster)
             if getattr(profile, 'is_real_image', False):
                 provenance_line = (
-                    f"- Data Provenance: Authenticated real satellite acquisition (Sentinel-2 / Sentinel-1)."
+                    "- Data Provenance: Authenticated real satellite acquisition (Sentinel-2 / Sentinel-1)."
                 )
             else:
                 sensors_val = ", ".join(getattr(profile, 'sensors', None) or ['unregistered'])

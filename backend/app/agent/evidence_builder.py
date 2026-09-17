@@ -438,7 +438,7 @@ class EvidenceBuilder:
                 "status": "completed",
                 "modelUsed": specialist_model_name,
                 "latencyMs": specialist_latency_ms,
-                "details": f"Executed specialist DSP / neural pipeline on Apple Silicon Metal (MPS) / CPU device.",
+                "details": "Executed specialist DSP / neural pipeline on Apple Silicon Metal (MPS) / CPU device.",
                 "outputPayload": f"Confidence: {(f'{confidence * 100:.1f}%' if confidence is not None else 'null (no posterior)')} | Features: {len(geojson.get('features', []))} | Class: {findings.get('changeClass')}",
             },
             {

@@ -1,0 +1,12 @@
+# Ruff configuration for SatQuery AI Backend
+target-version = "py311"
+line-length = 120
+
+[lint]
+select = ["E", "F"]
+ignore = [
+    "E501",  # line too long
+    "E402",  # module level import not at top of file
+    "F401",  # unused imports
+    "F841",  # unused variable
+]
