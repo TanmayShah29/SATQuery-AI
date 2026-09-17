@@ -943,7 +943,7 @@ export default function App() {
               </div>
             </div>
           )}
-        </>
+        </motion.div>
       )}
 
       {/* Secondary Header Subordinate Strip (Dashboard mode utility controls) */}
@@ -1098,8 +1098,6 @@ export default function App() {
           </div>
         </div>
       )}
-    </motion.div>
-  )}
 
       {/* 2. Main Workspace: Edge-to-Edge Canvas + Floating Tactical Tools + Right Operational Deck */}
       <div className={`flex-1 relative flex overflow-hidden ${isLandingMode && !isLaunching ? 'pointer-events-none' : ''}`}>
