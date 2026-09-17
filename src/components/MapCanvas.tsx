@@ -726,16 +726,16 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           data: initialScaledData,
         });
 
-        // Outer Glow Halo
+        // Outer Glow Halo with vibrant high-visibility neon accent
         map.addLayer({
           id: 'evidence-layer-glow',
           type: 'line',
           source: 'evidence-source',
           paint: {
-            'line-color': ['coalesce', ['get', 'borderColor'], ['get', 'stroke'], '#60A5FA'],
-            'line-width': 5,
-            'line-opacity': 0.35,
-            'line-blur': 3,
+            'line-color': ['coalesce', ['get', 'borderColor'], ['get', 'stroke'], '#F59E0B'],
+            'line-width': 8,
+            'line-opacity': 0.65,
+            'line-blur': 4,
           },
         });
 
@@ -744,8 +744,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           type: 'fill',
           source: 'evidence-source',
           paint: {
-            'fill-color': ['coalesce', ['get', 'fillColor'], ['get', 'fill'], '#3B82F6'],
-            'fill-opacity': ['coalesce', ['get', 'fillOpacity'], ['get', 'fill-opacity'], 0.32],
+            'fill-color': ['coalesce', ['get', 'fillColor'], ['get', 'fill'], '#EF4444'],
+            'fill-opacity': ['coalesce', ['get', 'fillOpacity'], ['get', 'fill-opacity'], 0.55],
           },
         });
 
@@ -754,9 +754,9 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           type: 'line',
           source: 'evidence-source',
           paint: {
-            'line-color': ['coalesce', ['get', 'borderColor'], ['get', 'stroke'], '#60A5FA'],
-            'line-width': ['coalesce', ['get', 'borderWidth'], ['get', 'stroke-width'], 2],
-            'line-dasharray': [2, 1],
+            'line-color': ['coalesce', ['get', 'borderColor'], ['get', 'stroke'], '#FBBF24'],
+            'line-width': ['coalesce', ['get', 'borderWidth'], ['get', 'stroke-width'], 3],
+            'line-dasharray': [3, 1],
           },
         });
 
@@ -1131,17 +1131,17 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     // D. Dynamic Opacity and Line Width Response
     try {
       if (map.getLayer('evidence-layer-fill')) {
-        const fillOpacity = Math.max(0.06, Math.min(0.68, 0.08 + 0.48 * progressRatio));
+        const fillOpacity = Math.max(0.25, Math.min(0.85, 0.25 + 0.55 * progressRatio));
         map.setPaintProperty('evidence-layer-fill', 'fill-opacity', fillOpacity);
       }
       if (map.getLayer('evidence-layer-line')) {
-        const lineOpacity = Math.max(0.20, Math.min(1.0, 0.25 + 0.75 * progressRatio));
-        const lineWidth = 1.5 + 1.5 * progressRatio;
+        const lineOpacity = Math.max(0.40, Math.min(1.0, 0.40 + 0.60 * progressRatio));
+        const lineWidth = 2.5 + 2.5 * progressRatio;
         map.setPaintProperty('evidence-layer-line', 'line-opacity', lineOpacity);
         map.setPaintProperty('evidence-layer-line', 'line-width', lineWidth);
       }
       if (map.getLayer('evidence-layer-glow')) {
-        const glowOpacity = Math.max(0.10, Math.min(0.60, 0.15 + 0.40 * progressRatio));
+        const glowOpacity = Math.max(0.30, Math.min(0.85, 0.30 + 0.50 * progressRatio));
         map.setPaintProperty('evidence-layer-glow', 'line-opacity', glowOpacity);
       }
     } catch {
@@ -1248,7 +1248,27 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
       essential: true,
     });
 
-    if (swipeMapRef.current) {
+    if (swipeMapRef.current && selectedPin) {
+      try {
+        const sm = swipeMapRef.current;
+        if (sm.getLayer('swipe-t1-raster-layer')) sm.removeLayer('swipe-t1-raster-layer');
+        if (sm.getSource('swipe-t1-raster-source')) sm.removeSource('swipe-t1-raster-source');
+        sm.addSource('swipe-t1-raster-source', {
+          type: 'image',
+          url: `/api/samples/sector-asset/${selectedPin.id}/t1`,
+          coordinates: getSectorRasterCoordinates(selectedPin),
+        });
+        sm.addLayer({
+          id: 'swipe-t1-raster-layer',
+          type: 'raster',
+          source: 'swipe-t1-raster-source',
+          paint: {
+            'raster-opacity': 0.95,
+            'raster-fade-duration': 0,
+          },
+        });
+      } catch (e) {}
+
       try {
         swipeMapRef.current.flyTo({
           center: [selectedPin.lon, selectedPin.lat],
@@ -1489,6 +1509,31 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
           (swipeMap as any).setProjection({ type: projection });
         }
       } catch {}
+
+      // Add T1 (Pre-Event) Optical RGB Ground Overlay to secondary swipe map
+      if (selectedPin && !swipeMap.getSource('swipe-t1-raster-source')) {
+        try {
+          const coords = getSectorRasterCoordinates(selectedPin);
+          const t1Url = `/api/samples/sector-asset/${selectedPin.id}/t1`;
+          swipeMap.addSource('swipe-t1-raster-source', {
+            type: 'image',
+            url: t1Url,
+            coordinates: coords,
+          });
+          swipeMap.addLayer({
+            id: 'swipe-t1-raster-layer',
+            type: 'raster',
+            source: 'swipe-t1-raster-source',
+            paint: {
+              'raster-opacity': 0.95,
+              'raster-fade-duration': 0,
+            },
+          });
+        } catch (err) {
+          console.warn('Error attaching T1 raster to swipe map:', err);
+        }
+      }
+
       try {
         swipeMap.resize();
         syncMaps();
