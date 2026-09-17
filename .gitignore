@@ -43,15 +43,10 @@ data/cache/
 
 
 # Agent & Workspace internal artifacts
-.agents/venv/
-.archive/.agents/
-.21st/
 frontend/.21st/
-.agents/
 .claude/
 .codex/
 .cursor/
-.mcp.json
 .tmp_read/
 .tmp_verbatim/
 .verbatim_temp/
