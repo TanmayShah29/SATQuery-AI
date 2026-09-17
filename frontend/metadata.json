@@ -1,0 +1,6 @@
+{
+  "name": "SatQuery AI — Divya-Drishti",
+  "description": "ISRO Space Applications Centre (SAC) SIH26167: Interactive Vision-Language Assistant for Multimodal Remote Sensing Image Analysis (Optical, SAR, Bi-Temporal, Cross-Modal).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

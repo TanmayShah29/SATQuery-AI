@@ -1,0 +1,71 @@
+{
+  "status": "success",
+  "target_problem_statement": "SIH26167",
+  "target_organization": "ISRO / Space Applications Centre (SAC)",
+  "dataset": "BigEarthNet (Sentinel-2) land-cover subset — 84 real remote-sensing samples used for adapter fine-tuning",
+  "foundation_backbone": "RemoteCLIP-ViT-B/32",
+  "adapter_architecture": "Residual Cross-Modal Projection Head (512 -> 256 -> 512); separate visual & text residual towers, each Linear(512,256)+LayerNorm+GELU+Linear(256,512), plus two LayerNorms and a learnable logit scale",
+  "adapter_architecture_code_verified": true,
+  "parameters_adapted": 528897,
+  "small_sample_caveat": "84 total real samples (58 train / 26 eval). Eval top-1 (26.92%) exceeding train top-1 (12.07%) is within small-sample variance and is NOT evidence of generalization; metrics are indicative only, not benchmark-grade.",
+  "epochs": 25,
+  "batch_size": 16,
+  "learning_rate": 0.0001,
+  "seed": 42,
+  "git_commit_sha": "uncommitted_local_build",
+  "total_real_samples": 84,
+  "train_samples": 58,
+  "eval_samples": 26,
+  "num_categories": 7,
+  "training_duration_seconds": 1.25,
+  "hardware_device": "mps",
+  "loss_curve": [
+    2.5568,
+    2.3033,
+    2.0671,
+    1.7387,
+    1.5037,
+    1.3018,
+    1.156,
+    1.1832,
+    1.1179,
+    1.0733,
+    1.1136,
+    0.9508,
+    0.9678,
+    0.9539,
+    0.992,
+    0.9572,
+    0.9828,
+    1.0266,
+    1.0304,
+    0.9318,
+    0.9945,
+    1.0204,
+    0.9944,
+    1.0149,
+    1.0423
+  ],
+  "final_loss": 1.0423,
+  "eval_heldout_baseline": {
+    "top1_accuracy": 0.0,
+    "top3_accuracy": 3.85
+  },
+  "eval_heldout_adapted": {
+    "top1_accuracy": 26.92,
+    "top3_accuracy": 69.23
+  },
+  "train_baseline": {
+    "top1_accuracy": 0.0,
+    "top3_accuracy": 0.0
+  },
+  "train_adapted": {
+    "top1_accuracy": 12.07,
+    "top3_accuracy": 36.21
+  },
+  "delta_heldout": {
+    "top1_improvement_pct": 26.92,
+    "top3_improvement_pct": 65.38
+  },
+  "timestamp": "2026-09-13T06:37:56Z"
+}

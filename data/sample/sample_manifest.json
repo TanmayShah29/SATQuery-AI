@@ -1,0 +1,58 @@
+{
+  "description": "SatQuery AI Local Development Sample Metadata",
+  "optical_samples": [
+    {
+      "id": "OPT-DELHI-001",
+      "sensor": "Sentinel-2 MSI",
+      "location": "New Delhi / Yamuna Floodplain",
+      "bands": [
+        "B02_Blue",
+        "B03_Green",
+        "B04_Red",
+        "B08_NIR"
+      ],
+      "cloud_cover": 1.2,
+      "timestamp": "2024-03-15T05:30:00Z",
+      "cog_url": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/43/R/FM/2024/3/S2A_43RFM_20240315_0_L2A/TCI.tif"
+    },
+    {
+      "id": "OPT-AHMEDABAD-002",
+      "sensor": "Sentinel-2 MSI",
+      "location": "Ahmedabad / ISRO SAC",
+      "bands": [
+        "B02_Blue",
+        "B03_Green",
+        "B04_Red",
+        "B08_NIR"
+      ],
+      "cloud_cover": 0.4,
+      "timestamp": "2024-03-27T05:40:00Z",
+      "cog_url": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/42/Q/ZL/2024/3/S2A_42QZL_20240327_0_L2A/TCI.tif"
+    }
+  ],
+  "sar_samples": [
+    {
+      "id": "SAR-ASSAM-001",
+      "sensor": "Sentinel-1 C-SAR (GRD)",
+      "location": "Brahmaputra Basin, Assam",
+      "polarizations": [
+        "VV",
+        "VH"
+      ],
+      "mode": "IW",
+      "timestamp": "2024-07-10T12:15:00Z",
+      "weather_condition": "Monsoon Heavy Rain / 100% Cloud Cover",
+      "purpose": "Cloud-piercing flood inundation mapping"
+    }
+  ],
+  "bitemporal_pairs": [
+    {
+      "id": "BT-KERALA-001",
+      "event": "Wayanad Inundation / Landslide",
+      "t1_pre_event": "2024-06-01",
+      "t2_post_event": "2024-08-05",
+      "change_type": "Flooding & Mudslide Debris Deposit",
+      "expected_qa": "Did the river banks overflow between June and August? Yes, water surface increased by 42%."
+    }
+  ]
+}

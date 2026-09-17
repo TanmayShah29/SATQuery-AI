@@ -1,0 +1,202 @@
+[
+  {
+    "image_id": "P0003_0002.png",
+    "question": "What color are the large vehicles seen in the image?",
+    "ground_truth": "Yellow",
+    "dataset": "RSBench",
+    "question_id": 0,
+    "type": "object color"
+  },
+  {
+    "image_id": "P0003_0002.png",
+    "question": "How many small vehicles are visible in the image?",
+    "ground_truth": "2",
+    "dataset": "RSBench",
+    "question_id": 1,
+    "type": "object quantity"
+  },
+  {
+    "image_id": "P0003_0002.png",
+    "question": "Is there a vehicle located at the top-most position in the provided image?",
+    "ground_truth": "Yes",
+    "dataset": "RSBench",
+    "question_id": 2,
+    "type": "object existence"
+  },
+  {
+    "image_id": "P0003_0002.png",
+    "question": "What is the orientation of the road in the image?",
+    "ground_truth": "North-South",
+    "dataset": "RSBench",
+    "question_id": 3,
+    "type": "object position"
+  },
+  {
+    "image_id": "P0003_0004.png",
+    "question": "How many vehicles are visible in the image?",
+    "ground_truth": "3",
+    "dataset": "RSBench",
+    "question_id": 4,
+    "type": "object quantity"
+  },
+  {
+    "image_id": "P0003_0004.png",
+    "question": "What is the position of the large vehicle in the image?",
+    "ground_truth": "middle-left",
+    "dataset": "RSBench",
+    "question_id": 5,
+    "type": "object position"
+  },
+  {
+    "image_id": "P0003_0004.png",
+    "question": "Is the large vehicle located near greenery?",
+    "ground_truth": "Yes",
+    "dataset": "RSBench",
+    "question_id": 6,
+    "type": "object existence"
+  },
+  {
+    "image_id": "P0003_0004.png",
+    "question": "What object class is the top-most vehicle?",
+    "ground_truth": "small-vehicle",
+    "dataset": "RSBench",
+    "question_id": 7,
+    "type": "object category"
+  },
+  {
+    "image_id": "P0003_0004.png",
+    "question": "What object class is the bottom-most vehicle?",
+    "ground_truth": "small-vehicle",
+    "dataset": "RSBench",
+    "question_id": 8,
+    "type": "object category"
+  },
+  {
+    "image_id": "P0007_0001.png",
+    "question": "How many small vehicles are visible?",
+    "ground_truth": "1",
+    "dataset": "RSBench",
+    "question_id": 9,
+    "type": "object quantity"
+  },
+  {
+    "image_id": "P0007_0004.png",
+    "question": "What is the predominant color of the large vehicles?",
+    "ground_truth": "white",
+    "dataset": "RSBench",
+    "question_id": 10,
+    "type": "object color"
+  },
+  {
+    "image_id": "P0007_0004.png",
+    "question": "How are the large vehicles predominantly arranged in the parking lot?",
+    "ground_truth": "in rows",
+    "dataset": "RSBench",
+    "question_id": 11,
+    "type": "object position"
+  },
+  {
+    "image_id": "P0007_0004.png",
+    "question": "Are there any large vehicles that are positioned away from the main cluster?",
+    "ground_truth": "yes",
+    "dataset": "RSBench",
+    "question_id": 12,
+    "type": "object existence"
+  },
+  {
+    "image_id": "P0007_0004.png",
+    "question": "What is the orientation of the large vehicles in the parking lot?",
+    "ground_truth": "north-south",
+    "dataset": "RSBench",
+    "question_id": 13,
+    "type": "object direction"
+  },
+  {
+    "image_id": "P0007_0005.png",
+    "question": "How many large vehicles are visible?",
+    "ground_truth": "4",
+    "dataset": "RSBench",
+    "question_id": 14,
+    "type": "object quantity"
+  },
+  {
+    "image_id": "P0007_0005.png",
+    "question": "Is there a small vehicle present?",
+    "ground_truth": "Yes",
+    "dataset": "RSBench",
+    "question_id": 15,
+    "type": "object existence"
+  },
+  {
+    "image_id": "P0007_0005.png",
+    "question": "Where is the small vehicle located?",
+    "ground_truth": "Top-right",
+    "dataset": "RSBench",
+    "question_id": 16,
+    "type": "object position"
+  },
+  {
+    "image_id": "P0007_0005.png",
+    "question": "What color is the parking lot?",
+    "ground_truth": "Gray",
+    "dataset": "RSBench",
+    "question_id": 17,
+    "type": "object color"
+  },
+  {
+    "image_id": "P0007_0006.png",
+    "question": "How many large vehicles are in the image?",
+    "ground_truth": "5",
+    "dataset": "RSBench",
+    "question_id": 18,
+    "type": "object quantity"
+  },
+  {
+    "image_id": "P0007_0006.png",
+    "question": "Is there a small vehicle present in the image?",
+    "ground_truth": "Yes",
+    "dataset": "RSBench",
+    "question_id": 19,
+    "type": "object existence"
+  },
+  {
+    "image_id": "P0007_0006.png",
+    "question": "Where is the small vehicle located?",
+    "ground_truth": "middle-left",
+    "dataset": "RSBench",
+    "question_id": 20,
+    "type": "object position"
+  },
+  {
+    "image_id": "P0007_0006.png",
+    "question": "Which vehicle is the right-most among all?",
+    "ground_truth": "large-vehicle",
+    "dataset": "RSBench",
+    "question_id": 21,
+    "type": "object position"
+  },
+  {
+    "image_id": "P0007_0006.png",
+    "question": "Which vehicle is the largest in the image?",
+    "ground_truth": "large-vehicle",
+    "dataset": "RSBench",
+    "question_id": 22,
+    "type": "object size"
+  },
+  {
+    "image_id": "P0007_0009.png",
+    "question": "What type of vehicles are mainly visible in the image?",
+    "ground_truth": "large-vehicle",
+    "dataset": "RSBench",
+    "question_id": 23,
+    "type": "object category"
+  },
+  {
+    "image_id": "P0007_0009.png",
+    "question": "What is the predominant color of the large vehicles in the image?",
+    "ground_truth": "white",
+    "dataset": "RSBench",
+    "question_id": 24,
+    "type": "object color"
+  }
+]

@@ -1,0 +1,6 @@
+src/components/MapCanvas.tsx(625,64): error TS2304: Cannot find name 'selectedPinRef'.
+src/components/MapCanvas.tsx(627,17): error TS2304: Cannot find name 'selectedPinRef'.
+src/components/MapCanvas.tsx(628,17): error TS2304: Cannot find name 'selectedPinRef'.
+src/components/MapCanvas.tsx(629,17): error TS2304: Cannot find name 'selectedPinRef'.
+src/components/MapCanvas.tsx(630,17): error TS2304: Cannot find name 'selectedPinRef'.
+src/components/RightOperationalPanel.tsx(179,80): error TS2339: Property 'region' does not exist on type 'TacticalGlobePin'.

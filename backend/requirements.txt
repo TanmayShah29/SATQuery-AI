@@ -1,0 +1,35 @@
+# SatQuery AI Backend Dependencies
+# Pinned versions for reproducible builds (Agent E — E-5)
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.5
+pydantic-settings==2.7.1
+python-multipart==0.0.20
+python-dotenv==1.0.1
+httpx==0.28.1
+
+# Scientific stack
+numpy==1.26.4
+scipy==1.15.1
+Pillow==11.1.0
+shapely==2.0.6
+
+# Geospatial (install rasterio separately if GDAL system lib is available)
+rasterio==1.4.3
+
+# ML
+torch==2.6.0
+torchvision==0.21.0
+open-clip-torch>=2.24.0
+
+# Security
+safetensors==0.4.2
+slowapi==0.1.9
+
+# Logging
+structlog==24.4.0
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.8
+requests==2.31.0

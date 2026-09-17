@@ -1,0 +1,366 @@
+{
+  "questions": [
+    {
+      "id": 0,
+      "date_added": 1631216247.989456,
+      "img_id": 0,
+      "type": "change_or_not",
+      "question": "Did the areas of non-vegetated ground surface change?",
+      "answers_ids": [
+        0
+      ],
+      "active": true
+    },
+    {
+      "id": 1,
+      "date_added": 1631216247.989462,
+      "img_id": 0,
+      "type": "change_or_not",
+      "question": "Did the regions of trees change?",
+      "answers_ids": [
+        1
+      ],
+      "active": true
+    },
+    {
+      "id": 2,
+      "date_added": 1631216247.9894648,
+      "img_id": 0,
+      "type": "change_or_not",
+      "question": "Have the areas of low vegetation changed?",
+      "answers_ids": [
+        2
+      ],
+      "active": true
+    },
+    {
+      "id": 3,
+      "date_added": 1631216247.9894676,
+      "img_id": 0,
+      "type": "change_or_not",
+      "question": "Have the regions of water changed?",
+      "answers_ids": [
+        3
+      ],
+      "active": true
+    },
+    {
+      "id": 4,
+      "date_added": 1631216247.9894702,
+      "img_id": 0,
+      "type": "change_or_not",
+      "question": "Have the regions of playgrounds changed?",
+      "answers_ids": [
+        4
+      ],
+      "active": true
+    },
+    {
+      "id": 5,
+      "date_added": 1631216248.0001714,
+      "img_id": 1,
+      "type": "change_or_not",
+      "question": "Did the regions of non-vegetated ground surface change in the pre-event image?",
+      "answers_ids": [
+        5
+      ],
+      "active": true
+    },
+    {
+      "id": 6,
+      "date_added": 1631216248.000177,
+      "img_id": 1,
+      "type": "change_or_not",
+      "question": "Did the areas of trees change in the pre-change image?",
+      "answers_ids": [
+        6
+      ],
+      "active": true
+    },
+    {
+      "id": 7,
+      "date_added": 1631216248.0001798,
+      "img_id": 1,
+      "type": "change_or_not",
+      "question": "Have the areas of low vegetation changed in the first image?",
+      "answers_ids": [
+        7
+      ],
+      "active": true
+    },
+    {
+      "id": 8,
+      "date_added": 1631216248.000183,
+      "img_id": 1,
+      "type": "change_or_not",
+      "question": "Did the areas of water change in the pre-change image?",
+      "answers_ids": [
+        8
+      ],
+      "active": true
+    },
+    {
+      "id": 9,
+      "date_added": 1631216248.0001853,
+      "img_id": 1,
+      "type": "change_or_not",
+      "question": "Have the regions of buildings changed in the first image?",
+      "answers_ids": [
+        9
+      ],
+      "active": true
+    },
+    {
+      "id": 10,
+      "date_added": 1631216248.010875,
+      "img_id": 2,
+      "type": "change_or_not",
+      "question": "Have the areas of non-vegetated ground surface changed in the second image?",
+      "answers_ids": [
+        10
+      ],
+      "active": true
+    },
+    {
+      "id": 11,
+      "date_added": 1631216248.0108776,
+      "img_id": 2,
+      "type": "change_or_not",
+      "question": "Have the regions of trees changed in the second image?",
+      "answers_ids": [
+        11
+      ],
+      "active": true
+    },
+    {
+      "id": 12,
+      "date_added": 1631216248.01088,
+      "img_id": 2,
+      "type": "change_or_not",
+      "question": "Did the areas of low vegetation change in the post-change image?",
+      "answers_ids": [
+        12
+      ],
+      "active": true
+    },
+    {
+      "id": 13,
+      "date_added": 1631216248.0108821,
+      "img_id": 2,
+      "type": "change_or_not",
+      "question": "Did the regions of water change in the post-event image?",
+      "answers_ids": [
+        13
+      ],
+      "active": true
+    },
+    {
+      "id": 14,
+      "date_added": 1631216248.010884,
+      "img_id": 2,
+      "type": "change_or_not",
+      "question": "Did the areas of buildings change in the post-change image?",
+      "answers_ids": [
+        14
+      ],
+      "active": true
+    },
+    {
+      "id": 15,
+      "date_added": 1631216248.0108862,
+      "img_id": 2,
+      "type": "change_or_not",
+      "question": "Have the regions of playgrounds changed in the second image?",
+      "answers_ids": [
+        15
+      ],
+      "active": true
+    },
+    {
+      "id": 16,
+      "date_added": 1631216248.0162237,
+      "img_id": 3,
+      "type": "increase_or_not",
+      "question": "Did the areas of low vegetation increase?",
+      "answers_ids": [
+        16
+      ],
+      "active": true
+    },
+    {
+      "id": 17,
+      "date_added": 1631216248.0162268,
+      "img_id": 3,
+      "type": "increase_or_not",
+      "question": "Have the regions of water increased?",
+      "answers_ids": [
+        17
+      ],
+      "active": true
+    },
+    {
+      "id": 18,
+      "date_added": 1631216248.016229,
+      "img_id": 3,
+      "type": "increase_or_not",
+      "question": "Did the regions of playgrounds increase?",
+      "answers_ids": [
+        18
+      ],
+      "active": true
+    },
+    {
+      "id": 19,
+      "date_added": 1631216248.0215554,
+      "img_id": 4,
+      "type": "decrease_or_not",
+      "question": "Did the regions of trees decrease?",
+      "answers_ids": [
+        19
+      ],
+      "active": true
+    }
+  ],
+  "answers": [
+    {
+      "id": 0,
+      "date_added": 1631216247.9894605,
+      "question_id": 0,
+      "answer": "yes",
+      "active": true
+    },
+    {
+      "id": 1,
+      "date_added": 1631216247.9894638,
+      "question_id": 1,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 2,
+      "date_added": 1631216247.9894664,
+      "question_id": 2,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 3,
+      "date_added": 1631216247.9894688,
+      "question_id": 3,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 4,
+      "date_added": 1631216247.9894714,
+      "question_id": 4,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 5,
+      "date_added": 1631216248.0001733,
+      "question_id": 5,
+      "answer": "yes",
+      "active": true
+    },
+    {
+      "id": 6,
+      "date_added": 1631216248.0001783,
+      "question_id": 6,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 7,
+      "date_added": 1631216248.000182,
+      "question_id": 7,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 8,
+      "date_added": 1631216248.0001843,
+      "question_id": 8,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 9,
+      "date_added": 1631216248.0001867,
+      "question_id": 9,
+      "answer": "yes",
+      "active": true
+    },
+    {
+      "id": 10,
+      "date_added": 1631216248.0108764,
+      "question_id": 10,
+      "answer": "yes",
+      "active": true
+    },
+    {
+      "id": 11,
+      "date_added": 1631216248.010879,
+      "question_id": 11,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 12,
+      "date_added": 1631216248.010881,
+      "question_id": 12,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 13,
+      "date_added": 1631216248.0108833,
+      "question_id": 13,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 14,
+      "date_added": 1631216248.0108855,
+      "question_id": 14,
+      "answer": "yes",
+      "active": true
+    },
+    {
+      "id": 15,
+      "date_added": 1631216248.0108871,
+      "question_id": 15,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 16,
+      "date_added": 1631216248.0162256,
+      "question_id": 16,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 17,
+      "date_added": 1631216248.0162277,
+      "question_id": 17,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 18,
+      "date_added": 1631216248.0162299,
+      "question_id": 18,
+      "answer": "no",
+      "active": true
+    },
+    {
+      "id": 19,
+      "date_added": 1631216248.021557,
+      "question_id": 19,
+      "answer": "no",
+      "active": true
+    }
+  ]
+}

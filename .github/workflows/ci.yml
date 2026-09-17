@@ -1,0 +1,77 @@
+name: CI
+# .github/workflows/ci.yml — Agent E (E-4)
+
+on:
+  push:
+    branches: [main, develop, fix/full-remediation]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend — Lint, Type Check, Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install ruff mypy types-requests
+      - name: Lint (ruff)
+        run: |
+          cd backend
+          ruff check app/
+      - name: Type check (mypy)
+        run: |
+          cd backend
+          mypy app/ --ignore-missing-imports
+      - name: Tests
+        run: |
+          cd backend
+          python -m pytest tests/ -v --tb=short -m "not integration"
+
+  frontend-tests:
+    name: Frontend — Lint, Type Check, Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      - name: Type check
+        run: |
+          cd frontend
+          npx tsc --noEmit
+      - name: Build
+        run: |
+          cd frontend
+          npm run build
+
+  security-scan:
+    name: Security — No Secrets in Source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for leaked API key
+        run: |
+          ! grep -r "3660bc10" . --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js"
+      - name: Check for HF tokens
+        run: |
+          ! grep -rE "hf_[a-zA-Z0-9]{20,}" . --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js"
+      - name: Verify .gitignore has backend/.env
+        run: |
+          grep -q "backend/\.env" .gitignore
+      - name: Verify CORS is not wildcard
+        run: |
+          ! grep -n 'allow_origins=\["\*"\]' backend/app/main.py
