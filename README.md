@@ -89,6 +89,22 @@ bash scripts/start.sh
 scripts\start.bat
 ```
 
+### Download the Local Qwen2.5 Model (Ollama)
+The backend runs its Vision-Language narrative synthesis on a **local Qwen2.5:3B** model served by [Ollama](https://ollama.ai). Install Ollama, then start it and pull the model:
+
+```bash
+# Install Ollama (macOS via Homebrew, or download from https://ollama.ai)
+brew install ollama
+
+# Start the Ollama service
+ollama serve &
+
+# Download the model the backend expects (qwen2.5:3b by default)
+ollama pull qwen2.5:3b
+```
+
+The exact model name can be overridden with `OLLAMA_MODEL` in `backend/.env` (e.g. `qwen2.5:7b`). Without Ollama the app still runs in fallback (DSP-only) mode, but local neural reasoning is disabled.
+
 ### Manual Setup (if needed)
 #### Backend
 ```bash
