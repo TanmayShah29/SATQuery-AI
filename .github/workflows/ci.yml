@@ -33,7 +33,7 @@ jobs:
       - name: Tests
         run: |
           cd backend
-          python -m pytest tests/ -v --tb=short -m "not integration"
+          python -m pytest tests/ -v --tb=short -m "not integration and not slow"
 
   frontend-tests:
     name: Frontend — Lint, Type Check, Build

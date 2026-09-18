@@ -216,8 +216,8 @@ class SARCloudPiercingEngine:
         # Measured efficiency of microwave SAR cloud piercing (pixel-level overlap)
         if cloud_mask is not None and cloud_pixels > 0:
             target_under_cloud = np.sum(target_mask & cloud_mask)
-            target_total = max(1, np.sum(target_mask))
-            pierced_efficiency = round(float((target_under_cloud / target_total) * 100.0), 1)
+            target_total = max(1, int(np.sum(target_mask)))
+            pierced_efficiency = round(float((int(target_under_cloud) / target_total) * 100.0), 1)
         else:
             # Fraction of scene area covered by detected radar scatterers
             pierced_efficiency = round(float((np.sum(target_mask) / total_pixels) * 100.0), 1)

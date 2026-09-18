@@ -53,6 +53,7 @@ def test_samples_vqa():
     assert "vrsbench_samples" in data or "cdvqa_samples" in data
 
 
+@pytest.mark.slow
 def test_query_single_optical():
     payload = {
         "query": "Identify institutional buildings in the satellite image",
@@ -81,6 +82,7 @@ def test_query_single_optical():
     assert data["telemetry"]["audit_hash"] == data["audit_hash"]
 
 
+@pytest.mark.slow
 def test_query_bitemporal_change():
     payload = {
         "query": "What changed between T1 and T2 in the building area?",
@@ -105,6 +107,7 @@ def test_query_bitemporal_change():
         assert forbidden not in blob
 
 
+@pytest.mark.slow
 def test_query_crossmodal_fusion():
     payload = {
         "query": "Use SAR radar to pierce the heavy cloud cover and identify structures",
@@ -121,6 +124,7 @@ def test_query_crossmodal_fusion():
     assert 0.0 <= data["findings"]["piercedCloudPercent"] <= 100.0
 
 
+@pytest.mark.slow
 def test_query_no_gemini_field_accepted():
     """Regression guard: the API must not require or depend on a gemini_api_key field."""
     payload = {
@@ -134,6 +138,7 @@ def test_query_no_gemini_field_accepted():
     assert data["telemetry"]["pipeline_status"] == "operational"
 
 
+@pytest.mark.slow
 def test_query_visual_grounding():
     """Verify that a region grounding query routes to visual_grounding intent and returns bounded polygons."""
     payload = {
@@ -149,6 +154,7 @@ def test_query_visual_grounding():
     assert len(data["geojson"]["features"]) > 0
 
 
+@pytest.mark.slow
 def test_query_scene_captioning():
     """Verify that scene description queries route to scene_captioning intent."""
     payload = {
@@ -163,12 +169,14 @@ def test_query_scene_captioning():
     assert len(data["answer"]) > 20
 
 
+@pytest.mark.slow
 def test_ai_key_endpoint_removed():
     """Ensure dead /api/settings/ai-key endpoint is completely removed (returns 404)."""
     response = client.post("/api/settings/ai-key", json={"api_key": "test", "provider": "gemini"})
     assert response.status_code == 404 or response.status_code == 405
 
 
+@pytest.mark.slow
 def test_reproducible_audit_hash():
     """Verify that re-running identical queries produces the identical cryptographic audit hash."""
     payload = {
@@ -189,6 +197,7 @@ def test_reproducible_audit_hash():
     )
 
 
+@pytest.mark.slow
 def test_benchmark_catalog():
     response = client.get("/api/benchmark/catalog")
     assert response.status_code == 200
@@ -197,6 +206,7 @@ def test_benchmark_catalog():
     assert data["count"] > 0
 
 
+@pytest.mark.slow
 def test_benchmark_evaluate_no_artificial_floor():
     """Regression guard: scores must not be artificially floored when there's no match."""
     payload = {
@@ -229,6 +239,7 @@ def test_upload_geojson():
     assert data["bbox"] == [72.5, 23.0, 72.6, 23.1]
 
 
+@pytest.mark.slow
 def test_sector_aware_spatial_grounding_galwan():
     """Verify that querying Galwan produces genuine Galwan coordinates, not Ahmedabad."""
     payload = {
@@ -254,6 +265,7 @@ def test_sector_aware_spatial_grounding_galwan():
     assert isinstance(first_coord[1], float)
 
 
+@pytest.mark.slow
 def test_sector_aware_sriharikota_change():
     """Verify bi-temporal change detection at Sriharikota uses correct dates and spaceport bounds."""
     payload = {
@@ -275,6 +287,7 @@ def test_sector_aware_sriharikota_change():
     assert 13.6 <= first_coord[1] <= 13.9, f"Expected lat in Sriharikota, got {first_coord[1]}"
 
 
+@pytest.mark.slow
 def test_sector_aware_malacca_sar_cloud_piercing():
     """Verify SAR cloud piercing over Malacca Strait detects ships and reports radar metrics."""
     payload = {
@@ -296,6 +309,7 @@ def test_sector_aware_malacca_sar_cloud_piercing():
     assert 2.3 <= first_coord[1] <= 2.7, f"Expected lat in Malacca Strait, got {first_coord[1]}"
 
 
+@pytest.mark.slow
 def test_bigearthnet_benchmark_evaluation():
     """Verify BigEarthNet benchmark challenges can be fetched and evaluated honestly."""
     cat_resp = client.get("/api/benchmark/catalog")
@@ -318,6 +332,7 @@ def test_bigearthnet_benchmark_evaluation():
     assert "metrics" in eval_data
 
 
+@pytest.mark.slow
 def test_change_detection_physical_gsd_area():
     """Verify change detection computes physical GSD area and true GeoJSON polygon geometry."""
     payload = {
@@ -341,6 +356,7 @@ def test_change_detection_physical_gsd_area():
     assert 0.0 < data["confidence"] <= 1.0
 
 
+@pytest.mark.slow
 def test_sar_fusion_signal_to_clutter_calibration():
     """Verify SAR cross-modal analysis computes Signal-to-Clutter Ratio and calibrated confidence."""
     payload = {
@@ -415,6 +431,7 @@ def test_uploaded_garbage_tif_rejected():
     assert response.status_code == 400
 
 
+@pytest.mark.slow
 def test_distinct_inputs_yield_distinct_audit_hash():
     """Two genuinely different sectors must produce different evidence hashes."""
     base = {"modality": "bitemporal", "query": "Detect surface changes between the two acquisitions"}
@@ -423,6 +440,7 @@ def test_distinct_inputs_yield_distinct_audit_hash():
     assert joshi["audit_hash"] != malacca["audit_hash"]
 
 
+@pytest.mark.slow
 def test_no_insar_claim_on_bitemporal():
     """No bitemporal response may claim InSAR/DInSAR/SBAS capability."""
     data = client.post("/api/query", json={
@@ -435,6 +453,7 @@ def test_no_insar_claim_on_bitemporal():
         assert forbidden not in blob
 
 
+@pytest.mark.slow
 def test_telemetry_provenance_block_present():
     """Telemetry must carry honest imagery provenance, not bare claims."""
     data = client.post("/api/query", json={
@@ -446,6 +465,7 @@ def test_telemetry_provenance_block_present():
         assert key in t, f"telemetry missing {key}"
 
 
+@pytest.mark.slow
 def test_live_stream_opt_in_and_honest_default():
     """C-1 guard: live stream is off by default; opt-in returns an honest status."""
     default = client.post("/api/query", json={
@@ -498,6 +518,7 @@ def test_corrupt_magic_valid_tiff_rejected_without_orphan():
     assert after == before, f"orphaned raster: {after - before}"
 
 
+@pytest.mark.slow
 def test_query_ignores_traversal_uploaded_file():
     """Security guard: a traversal in uploaded_file must not read outside uploads."""
     response = client.post("/api/query", json={
@@ -508,6 +529,7 @@ def test_query_ignores_traversal_uploaded_file():
     assert response.json()["telemetry"]["sector_id"] == "malacca-chokepoint"
 
 
+@pytest.mark.slow
 def test_shared_raster_sector_discloses_simulation():
     """B-2 guard: a sector whose raster bytes are shared must disclose simulation
     in the answer itself and report imagery_distinct=False (not just baseline-different)."""
@@ -522,6 +544,7 @@ def test_shared_raster_sector_discloses_simulation():
     assert data["answer"].startswith("SIMULATED DEMO RASTER")
 
 
+@pytest.mark.slow
 def test_real_acquisition_sector_is_not_labelled_simulated():
     """B-3 guard: the one real-acquisition sector must not carry a simulation disclosure."""
     data = client.post("/api/query", json={

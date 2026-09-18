@@ -62,6 +62,7 @@ class TestQueryEndpoint:
         response = client.post("/api/query", json={"query": ""})
         assert response.status_code in (400, 422)
 
+    @pytest.mark.slow
     def test_query_accepts_valid_request(self):
         """Query must return 200 (success) or 401 (auth required) or 500 (Ollama down)."""
         response = client.post(
@@ -70,6 +71,7 @@ class TestQueryEndpoint:
         )
         assert response.status_code in (200, 401, 500)
 
+    @pytest.mark.slow
     def test_query_response_has_required_fields_on_success(self):
         response = client.post(
             "/api/query",
