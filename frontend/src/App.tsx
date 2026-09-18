@@ -337,6 +337,11 @@ export default function App() {
   // re-issues a query the user has already triggered.
   const lastAnalyzedSectorRef = useRef<string | null>(null);
   const lastAnalyzedPinRef = useRef<string | null>(null);
+  // Monotonic request sequence. A response is only ever applied when it is still
+  // the LATEST request: superseded queries (a background preload, or a previously
+  // clicked pin) arrive out of order and must never drive the camera, evidence,
+  // or UI actions once the user has moved on to a different sector.
+  const latestQuerySeqRef = useRef(0);
 
   // Core Real Query Execution Engine with 30s Timeout Guard
   const executeQuery = useCallback(
@@ -352,6 +357,7 @@ export default function App() {
       if (inFlightQueriesRef.current.has(requestKey)) {
         return;
       }
+      const seq = ++latestQuerySeqRef.current;
       inFlightQueriesRef.current.add(requestKey);
       lastAnalyzedSectorRef.current = `${pin.id}-${activeMode}`;
       lastAnalyzedPinRef.current = pin.id;
@@ -386,15 +392,24 @@ export default function App() {
           }),
           timeoutPromise,
         ]);
+        if (seq !== latestQuerySeqRef.current) {
+          console.debug(
+            '[SatQuery] discarding stale response — a newer query superseded this one',
+            `seq=${seq}`
+          );
+          return;
+        }
         setQueryResponse(response);
         setQueryError(null);
       } catch (err: any) {
+        if (seq !== latestQuerySeqRef.current) return;
         console.error('Error executing SatQuery:', err);
         setQueryError(err?.message || 'Backend request failed.');
       } finally {
         inFlightQueriesRef.current.delete(requestKey);
+        if (seq !== latestQuerySeqRef.current) return;
+        setIsAnalyzing(false);
         if (!silent) {
-          setIsAnalyzing(false);
           setOperationalDeckOpen(true);
           setOperationalDeckTab('evidence');
         }
