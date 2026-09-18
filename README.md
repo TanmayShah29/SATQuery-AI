@@ -13,6 +13,8 @@
 
 ---
 
+![SatQuery AI Landing Page](Landing-page.png)
+
 ## 🛰️ Overview
 
 **SatQuery AI** is an operational-grade Geospatial Intelligence & Remote Sensing Vision-Language Studio. Designed to move beyond generic LLM chatbots and "AI wrappers," SatQuery AI provides an interactive, map-centric workbench with native raster ingestion, multi-spectral band processing, and pixel-grounded geospatial reasoning.
@@ -93,6 +95,8 @@ npm run dev
 ```
 
 ---
+
+![SatQuery AI Dashboard](Dashboard.png)
 
 ## 📚 Documentation & Hackathon Dossier
 
