@@ -247,8 +247,9 @@ class BiTemporalChangeDetector:
             "dominant_change_class": "Structural & Terrain Evolution" if features else "Nominal Stability (No Major Drift)",
         }
 
-    @staticmethod
+    @classmethod
     def render_diff_heatmap(
+        cls,
         img_t1: Image.Image,
         img_t2: Image.Image,
         bbox: Optional[List[float]] = None,
