@@ -13,7 +13,7 @@
 
 ---
 
-![SatQuery AI Landing Page](Landing-page.png)
+![SatQuery AI Landing Page](sih-info/assets/Landing-page.png)
 
 ## 🛰️ Overview
 
@@ -50,12 +50,24 @@
 │   └── weights/               # Model weights & adapters (large weights git-ignored)
 ├── sih-info/                  # Comprehensive SIH 2026 Master Dossier & slides
 │   ├── README.md              # Master dossier quick start & index
+│   ├── presentations/         # Official PPTX decks & presentation templates
+│   ├── assets/                # Presentation images & diagrams
+│   ├── diagrams/              # Generated diagrams & howlers extraction
 │   ├── 07-satquery-production-architecture.md
 │   ├── 08-satquery-datasets-and-tech-ecosystem.md
-│   ├── 09-ui-ux-design-specification.md
-│   └── 12-complete-application-build-plan.md
-├── Dockerfile                 # Containerized deployment
-└── nginx.conf                 # Reverse proxy & static serving config
+│   └── 09-ui-ux-design-specification.md
+├── scripts/                   # Setup, start, and utility scripts
+│   ├── setup.py               # One-command setup (Mac/Windows/Linux)
+│   ├── start.sh / start.bat   # One-line server start
+│   ├── run_app.sh             # Launch both backend + frontend
+│   └── generate_presentation*.py  # Presentation generation scripts
+├── docs/                      # Audit reports, remediation logs, limitations
+├── deploy/                    # Docker & deployment configs
+│   ├── Dockerfile             # Containerized deployment
+│   ├── docker-compose.yml     # Local stack orchestration
+│   └── nginx.conf             # Reverse proxy & static serving config
+├── setup.py                   # Root-level project setup
+└── README.md                  # This file
 ```
 
 ---
@@ -96,7 +108,7 @@ npm run dev
 
 ---
 
-![SatQuery AI Dashboard](Dashboard.png)
+![SatQuery AI Dashboard](sih-info/assets/Dashboard.png)
 
 ## 📚 Documentation & Hackathon Dossier
 
