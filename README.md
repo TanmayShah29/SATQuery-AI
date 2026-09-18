@@ -60,30 +60,37 @@
 
 ## ⚡ Quick Start
 
-### 1. Prerequisites
-- Python 3.10+
-- Node.js 18+ and `npm`
-- GDAL / Rasterio runtime libraries (for GeoTIFF operations)
+### One-Command Setup (macOS / Windows / Linux)
+```bash
+python setup.py
+```
+This creates a Python venv, installs all backend dependencies, sets up `backend/.env`, installs frontend npm packages, and checks for Ollama. Requires Python 3.10+ and Node.js 18+ pre-installed.
 
-### 2. Backend Setup
+### One-Line Server Start
+```bash
+# macOS / Linux / WSL:
+bash scripts/start.sh
+
+# Windows:
+scripts\start.bat
+```
+
+### Manual Setup (if needed)
+#### Backend
 ```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# Start the FastAPI server on port 8000
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
-Backend API docs will be available at `http://localhost:8000/docs`.
 
-### 3. Frontend Setup
+#### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The application will launch at `http://localhost:3000`.
 
 ---
 
