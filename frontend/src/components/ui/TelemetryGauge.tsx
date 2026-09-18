@@ -150,7 +150,7 @@ export const TelemetryGauge: React.FC<TelemetryGaugeProps> = ({
         })}
       </div>
 
-      {/* Tactical HUD Corner Reticles */}
+      {/* Corner brackets */}
       <div className={cn('pointer-events-none absolute left-0 top-0 h-1.5 w-1.5 border-l-2 border-t-2', styles.corner)} aria-hidden="true" />
       <div className={cn('pointer-events-none absolute right-0 top-0 h-1.5 w-1.5 border-r-2 border-t-2', styles.corner)} aria-hidden="true" />
       <div className={cn('pointer-events-none absolute bottom-0 left-0 h-1.5 w-1.5 border-b-2 border-l-2', styles.corner)} aria-hidden="true" />

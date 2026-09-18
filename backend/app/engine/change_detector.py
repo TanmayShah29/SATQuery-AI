@@ -7,6 +7,7 @@ morphological cleanup, and CRS-grounded GeoJSON polygon vectorization.
 """
 
 import math
+import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 import numpy as np
@@ -16,6 +17,8 @@ import rasterio.features
 from rasterio.transform import from_bounds
 from shapely.geometry import Polygon, MultiPolygon, mapping, shape
 from shapely.ops import unary_union
+
+logger = logging.getLogger(__name__)
 
 
 class BiTemporalChangeDetector:
@@ -243,3 +246,41 @@ class BiTemporalChangeDetector:
             "geojson": geojson,
             "dominant_change_class": "Structural & Terrain Evolution" if features else "Nominal Stability (No Major Drift)",
         }
+
+    @staticmethod
+    def render_diff_heatmap(
+        img_t1: Image.Image,
+        img_t2: Image.Image,
+        bbox: Optional[List[float]] = None,
+        sensitivity: float = 1.0,
+    ) -> Optional[Image.Image]:
+        """Renders the raw radiometric delta as a false-color heatmap PNG.
+
+        Returns a PIL RGB image where unchanged pixels are dark blue, low-magnitude
+        change is teal/green, and high-magnitude change is amber/red. This is the
+        *raw magnitude* of change — not the polygon outlines — so users can see
+        exactly where and how much the surface moved between T1 and T2.
+        """
+        try:
+            w = min(img_t1.width, img_t2.width)
+            h = min(img_t1.height, img_t2.height)
+            t1 = img_t1.resize((w, h), Image.Resampling.BILINEAR)
+            t2 = img_t2.resize((w, h), Image.Resampling.BILINEAR)
+            g1 = cls._to_gray_array(t1)
+            g2 = cls._to_gray_array(t2)
+            diff = np.abs(g2 - g1)
+            smooth = gaussian_filter(diff, sigma=1.5)
+            base_thresh, _ = cls.otsu_threshold(smooth)
+            thresh = np.clip(base_thresh * (1.0 / max(0.2, sensitivity)), 0.12, 0.70)
+
+            # Normalize magnitude 0..1 for colormap
+            mag = np.clip(smooth / max(thresh, 1e-6), 0.0, 1.0)
+            rgb = np.zeros((h, w, 3), dtype=np.uint8)
+            # Jet-like ramp: dark blue -> cyan -> green -> yellow -> red
+            rgb[..., 0] = (np.clip((mag - 0.5) * 2.0, 0, 1) * 255).astype(np.uint8)  # R
+            rgb[..., 1] = (np.clip((mag - 0.25) * 2.0, 0, 1) * 255).astype(np.uint8)  # G
+            rgb[..., 2] = (np.clip((0.5 - mag) * 2.0, 0, 1) * 255).astype(np.uint8)  # B
+            return Image.fromarray(rgb, "RGB")
+        except Exception as e:
+            logger.warning(f"Diff heatmap render failed: {e}")
+            return None

@@ -368,8 +368,8 @@ export default function App() {
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(new Error('SatQuery Inference Timeout: Hardware engine took longer than 30s.'));
-        }, 30000);
+          reject(new Error('SatQuery Inference Timeout: Hardware engine took longer than 90s.'));
+        }, 90000);
       });
 
       try {

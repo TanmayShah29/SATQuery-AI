@@ -30,7 +30,7 @@ class QueryResponse(BaseModel):
     modality: str
     intent: str
     answer: str
-    confidence: float
+    confidence: Optional[float] = None
     latency_ms: float
     audit_hash: Optional[str] = None
     benchmarkSource: Optional[str] = None

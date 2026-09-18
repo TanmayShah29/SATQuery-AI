@@ -108,8 +108,62 @@ function getSectorRasterCoordinates(pin: TacticalGlobePin): [
   ];
 }
 
-function getSectorRasterUrl(pin: TacticalGlobePin, band: SensorBand): string {
+// SensorBand is the UI RGB/NIR/SAR toggle. The bi-temporal swipe curtain also
+// passes 'T1'/'T2' as raster epochs, so the sector-raster helpers accept those
+// in addition to the sensor bands (URLs resolve to sector-asset/{band}).
+type RasterBand = SensorBand | 'T1' | 'T2';
+
+function getSectorRasterUrl(pin: TacticalGlobePin, band: RasterBand): string {
   return `/api/samples/sector-asset/${pin.id}/${band.toLowerCase()}`;
+}
+
+/**
+ * Attaches a calibrated sector raster 'image' source + raster layer to any
+ * MapLibre map instance. Used for BOTH the main map (T2/RGB) and the swipe
+ * overlay map (T1) so the two curtain halves show the SAME location across
+ * two real acquisition dates, in the same modality.
+ */
+function addSectorRasterOverlay(
+  map: MapLibreMap,
+  pin: TacticalGlobePin,
+  band: RasterBand,
+  sourceId: string,
+  layerId: string,
+  beforeId?: string
+): boolean {
+  if (!pin) return false;
+  const coordinates = getSectorRasterCoordinates(pin);
+  const url = getSectorRasterUrl(pin, band);
+  try {
+    if (map.getSource(sourceId)) {
+      (map.getSource(sourceId) as any).setData({}); // no-op safety
+      map.removeSource(sourceId);
+    }
+    if (map.getLayer(layerId)) {
+      map.removeLayer(layerId);
+    }
+    map.addSource(sourceId, {
+      type: 'image',
+      url,
+      coordinates,
+    });
+    map.addLayer(
+      {
+        id: layerId,
+        type: 'raster',
+        source: sourceId,
+        paint: {
+          'raster-opacity': 0.92,
+          'raster-fade-duration': 250,
+        },
+      },
+      beforeId
+    );
+    return true;
+  } catch (err) {
+    console.warn(`Could not attach sector raster overlay (${layerId}):`, err);
+    return false;
+  }
 }
 
 function scaleRing(ring: [number, number][], scale: number): [number, number][] {
@@ -1135,8 +1189,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     };
   }, [activeSensorBand, applySensorFilter]);
 
-  // 6d. Dynamic Sector Ground Raster Overlay Synchronization (RGB / NIR / SAR)
-  const updateSectorGroundRaster = useCallback((pin: TacticalGlobePin | null, band: SensorBand) => {
+  // 6d. Dynamic Sector Ground Raster Overlay Synchronization (RGB / NIR / SAR / T2)
+  // When the bi-temporal swipe curtain is active, BOTH sides must show the
+  // same modality (RGB) at the same location — T1 on the overlay map, T2 on
+  // the main map — otherwise the curtain is comparing two different things.
+  const updateSectorGroundRaster = useCallback((pin: TacticalGlobePin | null, band: RasterBand) => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
@@ -1189,17 +1246,21 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
   }, []);
 
   useEffect(() => {
-    updateSectorGroundRaster(selectedPin, activeSensorBand);
+    // When the swipe curtain is open, force the main map to T2 (RGB post-event
+    // epoch) regardless of activeSensorBand. The curtain is a T1-vs-T2
+    // comparison; NIR/SAR on one side would compare different modalities.
+    const effectiveBand: RasterBand = swipeActive ? 'T2' : activeSensorBand;
+    updateSectorGroundRaster(selectedPin, effectiveBand);
     const map = mapInstanceRef.current;
     if (!map) return;
-    const onReady = () => updateSectorGroundRaster(selectedPin, activeSensorBand);
+    const onReady = () => updateSectorGroundRaster(selectedPin, effectiveBand);
     map.on('styledata', onReady);
     map.on('load', onReady);
     return () => {
       map.off('styledata', onReady);
       map.off('load', onReady);
     };
-  }, [selectedPin, activeSensorBand, updateSectorGroundRaster]);
+  }, [selectedPin, activeSensorBand, swipeActive, updateSectorGroundRaster]);
 
   // 7. Secondary Map for Bi-Temporal Swipe Curtain (T1 Baseline Epoch)
   useEffect(() => {
@@ -1223,6 +1284,9 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
     try {
       swipeMap = new MapLibreMap({
         container: swipeOverlayContainerRef.current,
+        // Plain basemap (no hue-rotated CIR simulation) — the real T1 sector
+        // raster is attached as an 'image' source below, so the basemap is
+        // purely context underlay.
         style: createBitemporalBaselineStyle(projection),
         center: mainMap.getCenter(),
         zoom: mainMap.getZoom(),
@@ -1252,6 +1316,23 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
 
     // Apply projection, identical padding, and sync on initial style load
     let readyTimer: any = null;
+    let t1OverlayAdded = false;
+    const attachT1Overlay = () => {
+      if (t1OverlayAdded || !selectedPin) return;
+      const ok = addSectorRasterOverlay(
+        swipeMap,
+        selectedPin,
+        'T1',
+        'sector-raster-overlay-source-t1',
+        'sector-raster-overlay-layer-t1',
+        't1-reference-tiles-layer'
+      );
+      if (ok) {
+        t1OverlayAdded = true;
+        try { swipeMap.triggerRepaint(); } catch {}
+      }
+    };
+
     const handleReady = () => {
       try {
         if (typeof (swipeMap as any).setPadding === 'function') {
@@ -1267,6 +1348,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
         swipeMap.resize();
         syncMaps();
       } catch {}
+      // Attach the real T1 sector raster once the style is present.
+      attachT1Overlay();
       setSwipeMapReady(true);
     };
 
@@ -1305,7 +1388,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
       } catch {}
       swipeMapRef.current = null;
     };
-  }, [swipeActive, projection]);
+  }, [swipeActive, projection, selectedPin]);
 
   // Handle Dragging Bi-Temporal Slider
   const handleMouseDownSlider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -1542,6 +1625,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, MapCanvasProps>(function Ma
             <span className="text-[8px] font-mono text-blue-300 font-bold leading-tight text-center truncate w-full">
               {t2Date ? new Date(t2Date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase() : 'T2'}
             </span>
+            <span className="text-[7px] font-mono text-cyan-400/80 mt-0.5">RGB</span>
           </div>
         </div>
       )}

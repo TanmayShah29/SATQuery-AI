@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Split,
   Layers,
@@ -12,9 +12,14 @@ import {
   HelpCircle,
   FileCode,
   Sliders,
+  Flame,
+  Eye,
+  EyeOff,
+  CheckCircle2,
 } from 'lucide-react';
 import { X } from 'lucide-react';
 import type { QueryResponse, TacticalGlobePin } from '../types';
+import { fetchSectorDiffHeatmap } from '../services/api';
 
 interface BitemporalStudioProps {
   queryResponse: QueryResponse | null;
@@ -47,6 +52,9 @@ export const BitemporalStudio: React.FC<BitemporalStudioProps> = ({
   onClose,
 }) => {
   const [activeQuestion, setActiveQuestion] = useState(CDVQA_PRESETS[0]);
+  const [showDiffHeatmap, setShowDiffHeatmap] = useState<boolean>(false);
+  const [diffHeatmapUrl, setDiffHeatmapUrl] = useState<string | null>(null);
+  const [diffHeatmapLoading, setDiffHeatmapLoading] = useState<boolean>(false);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -56,7 +64,35 @@ export const BitemporalStudio: React.FC<BitemporalStudioProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Load the raw radiometric diff heatmap on demand. Honest failure path:
+  // if the sector has no distinct T1/T2 rasters or the render fails, the
+  // toggle stays off and the UI shows why rather than a fake image.
+  useEffect(() => {
+    if (!showDiffHeatmap || !selectedPin) return;
+    let isMounted = true;
+    setDiffHeatmapLoading(true);
+    setDiffHeatmapUrl(null);
+    fetchSectorDiffHeatmap(selectedPin.id, 1.0).then((blob) => {
+      if (!isMounted) return;
+      if (blob) {
+        setDiffHeatmapUrl(URL.createObjectURL(blob));
+      }
+      setDiffHeatmapLoading(false);
+    }).catch(() => {
+      if (!isMounted) return;
+      setDiffHeatmapLoading(false);
+    });
+    return () => {
+      isMounted = false;
+      if (diffHeatmapUrl) URL.revokeObjectURL(diffHeatmapUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDiffHeatmap, selectedPin?.id]);
+
   const findings = queryResponse?.findings;
+  const telemetry = queryResponse?.telemetry;
+  const imageryDistinct = telemetry?.imagery_distinct;
+  const imageryOrigin = telemetry?.imagery_origin;
   const areaKm2 = findings?.surfaceAreaModifiedKm2 ?? null;
   const changeClass = findings?.changeClass || (selectedPin?.temporalDelta ? `Sector baseline: ${selectedPin.temporalDelta}` : 'None (Awaiting Inference)');
 
@@ -92,6 +128,76 @@ export const BitemporalStudio: React.FC<BitemporalStudioProps> = ({
       </div>
 
       <div className="p-3.5 space-y-3 overflow-y-auto">
+        {/* Honest distinctness banner: if T1/T2 rasters are NOT distinct for this
+            sector, change detection has no meaningful signal — say so rather
+            than letting the curtain look broken. Matches the project's
+            anti-fabrication / honest-labeling convention. */}
+        {imageryDistinct === false && (
+          <div className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/50 text-[10px] font-mono text-amber-200 flex items-start space-x-1.5">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
+            <div>
+              <div className="font-bold text-amber-300 uppercase tracking-wide">
+                T1/T2 Imagery Not Distinct
+              </div>
+              <span>
+                This sector's T1 and T2 rasters fall back to the same baseline
+                file{imageryOrigin ? ` (${imageryOrigin})` : ''}. Change detection
+                will show no meaningful difference — the curtain is comparing
+                identical imagery.
+              </span>
+            </div>
+          </div>
+        )}
+        {imageryDistinct === true && (
+          <div className="p-2 rounded-lg bg-emerald-950/30 border border-emerald-500/40 text-[9px] font-mono text-emerald-300 flex items-center space-x-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0 text-emerald-400" />
+            <span>
+              Distinct T1/T2 acquisitions confirmed{imageryOrigin ? ` — ${imageryOrigin}` : ''}.
+              Both curtain halves render the same location in RGB across two real dates.
+            </span>
+          </div>
+        )}
+
+        {/* Difference Heatmap Toggle (raw magnitude, not polygon outlines) */}
+        <div className="p-2.5 rounded-lg bg-[#0D121B] border border-[#1C2638] space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold flex items-center space-x-1">
+              <Flame className="w-3 h-3 text-rose-400" />
+              <span>Raw Delta Heatmap</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowDiffHeatmap((v) => !v)}
+              title={showDiffHeatmap ? 'Hide diff heatmap' : 'Show raw radiometric delta heatmap'}
+              className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border transition-colors cursor-pointer ${
+                showDiffHeatmap
+                  ? 'bg-rose-950/60 text-rose-200 border-rose-500/50'
+                  : 'bg-[#0B0F17] text-slate-400 border-[#1C2638] hover:text-slate-200'
+              }`}
+            >
+              {showDiffHeatmap ? (
+                <span className="flex items-center space-x-1"><EyeOff className="w-3 h-3" /><span>HIDE</span></span>
+              ) : (
+                <span className="flex items-center space-x-1"><Eye className="w-3 h-3" /><span>SHOW</span></span>
+              )}
+            </button>
+          </div>
+          {showDiffHeatmap && (
+            diffHeatmapLoading ? (
+              <div className="text-[9px] font-mono text-slate-500 italic">Rendering radiometric delta heatmap…</div>
+            ) : diffHeatmapUrl ? (
+              <img
+                src={diffHeatmapUrl}
+                alt="Radiometric delta heatmap (dark blue = unchanged, red = maximum change)"
+                className="w-full rounded border border-[#1C2638]"
+              />
+            ) : (
+              <div className="text-[9px] font-mono text-rose-400/80 italic">
+                Diff heatmap unavailable for this sector (no distinct T1/T2 rasters).
+              </div>
+            )
+          )}
+        </div>
         {/* Epoch Timestamps */}
         <div className="grid grid-cols-2 gap-2 text-xs font-mono">
           <div className="p-2 rounded-lg bg-[#0A0E16] border border-[#1E283C] space-y-0.5">

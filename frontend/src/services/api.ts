@@ -245,4 +245,24 @@ export async function inspectPixelPoint(payload: {
   }
 }
 
+/**
+ * Fetches the raw radiometric delta heatmap PNG for a sector's T1/T2 pair.
+ * Returns a Blob (image/png) or null on failure — never a fabricated image.
+ */
+export async function fetchSectorDiffHeatmap(sectorId: string, sensitivity: number = 1.0): Promise<Blob | null> {
+  try {
+    const res = await fetch(
+      `${API_BASE}/samples/sector-diff-heatmap/${encodeURIComponent(sectorId)}?sensitivity=${sensitivity}`
+    );
+    if (!res.ok) {
+      console.warn(`[DiffHeatmap] HTTP ${res.status} for sector ${sectorId}`);
+      return null;
+    }
+    return await res.blob();
+  } catch (err) {
+    console.warn('[DiffHeatmap] Fetch error:', err);
+    return null;
+  }
+}
+
 

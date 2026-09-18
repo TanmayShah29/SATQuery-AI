@@ -273,7 +273,7 @@ class RealTimeVLMAgent:
                     "top_p": 0.9,
                 }
             }
-            resp = requests.post(ollama_url, json=payload, timeout=40)
+            resp = requests.post(ollama_url, json=payload, timeout=120)
             if resp.status_code == 200:
                 data = resp.json()
                 text = data.get("response", "").strip()

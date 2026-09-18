@@ -16,10 +16,16 @@ import {
   Sparkles,
   X,
   ShieldCheck,
+  Search,
+  Globe,
+  Radio,
+  Clock,
+  Cloud,
+  Image as ImageIcon,
 } from 'lucide-react';
 import type { GeoTIFFMetadata } from '../types';
-import { SAMPLE_GEOTIFFS } from '../config/tacticalData';
-import { uploadDatasetFile, fetchPrecalibratedGeoTIFFs, fetchHealth } from '../services/api';
+import { SAMPLE_GEOTIFFS, TACTICAL_PINS } from '../config/tacticalData';
+import { uploadDatasetFile, fetchPrecalibratedGeoTIFFs, fetchHealth, searchLiveSTAC } from '../services/api';
 
 interface IngestionStudioProps {
   onSelectGeoTIFF: (tiff: GeoTIFFMetadata) => void;
@@ -50,6 +56,16 @@ export const IngestionStudio: React.FC<IngestionStudioProps> = ({ onSelectGeoTIF
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Live STAC search state
+  const [stacSectorPreset, setStacSectorPreset] = useState<string>(TACTICAL_PINS[0]?.id || 'isro-sac');
+  const [stacLat, setStacLat] = useState<number>(TACTICAL_PINS[0]?.lat ?? 23.0225);
+  const [stacLon, setStacLon] = useState<number>(TACTICAL_PINS[0]?.lon ?? 72.5714);
+  const [stacCollection, setStacCollection] = useState<'sentinel-2-l2a' | 'sentinel-1-grd'>('sentinel-2-l2a');
+  const [stacLimit, setStacLimit] = useState<number>(5);
+  const [stacResults, setStacResults] = useState<any[]>([]);
+  const [stacStatus, setStacStatus] = useState<'idle' | 'loading' | 'online' | 'empty' | 'error'>('idle');
+  const [stacError, setStacError] = useState<string | null>(null);
+
   useEffect(() => {
     fetchPrecalibratedGeoTIFFs().then((data) => {
       if (Array.isArray(data) && data.length > 0) {
@@ -75,6 +91,35 @@ export const IngestionStudio: React.FC<IngestionStudioProps> = ({ onSelectGeoTIF
       }
     }).catch(() => {});
   }, []);
+
+  const handleLiveSTACSearch = async () => {
+    if (!stacLat || !stacLon) {
+      setStacError('Enter valid latitude and longitude.');
+      setStacStatus('error');
+      return;
+    }
+    setStacStatus('loading');
+    setStacError(null);
+    setStacResults([]);
+    try {
+      const res = await searchLiveSTAC({
+        lat: stacLat,
+        lon: stacLon,
+        collection: stacCollection,
+        limit: stacLimit,
+      });
+      if (res?.status === 'error' || !res?.scenes) {
+        setStacStatus('error');
+        setStacError('Live STAC query returned an error. Check network and try again.');
+        return;
+      }
+      setStacResults(res.scenes || []);
+      setStacStatus(res.scenes && res.scenes.length > 0 ? 'online' : 'empty');
+    } catch (err: any) {
+      setStacStatus('error');
+      setStacError(err?.message || 'Live STAC query failed.');
+    }
+  };
 
   const handleRealUpload = async (file: File) => {
     setIsUploading(true);
@@ -315,6 +360,202 @@ export const IngestionStudio: React.FC<IngestionStudioProps> = ({ onSelectGeoTIF
               {integrationStatus.bhuvan.configured ? 'CONFIGURED (LULC Theme)' : 'NOT CONFIGURED (.env key)'}
             </div>
           </div>
+        </div>
+
+        {/* Live STAC Satellite Catalog Search (real Element84 / Planetary Computer) */}
+        <div className="p-2.5 rounded-lg bg-[#0A0E16] border border-[#1E283C] space-y-2 text-xs font-mono">
+          <div className="flex items-center justify-between pb-1 border-b border-[#1A2333]">
+            <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center space-x-1">
+              <Satellite className="w-3 h-3 text-cyan-400" />
+              <span>Live STAC Satellite Catalog Search</span>
+            </span>
+            <span
+              id="ingestion-stac-status"
+              className={`px-1.5 py-0.2 rounded text-[9px] font-bold border ${
+                stacStatus === 'online'
+                  ? 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
+                  : stacStatus === 'loading'
+                  ? 'bg-cyan-950 text-cyan-300 border-cyan-500/40 animate-pulse'
+                  : stacStatus === 'empty'
+                  ? 'bg-amber-950 text-amber-300 border-amber-500/40'
+                  : stacStatus === 'error'
+                  ? 'bg-rose-950 text-rose-300 border-rose-500/40'
+                  : 'bg-[#10141E] text-slate-400 border-[#1E283C]'
+              }`}
+            >
+              {stacStatus === 'online'
+                ? `${stacResults.length} LIVE SCENE${stacResults.length === 1 ? '' : 'S'}`
+                : stacStatus === 'loading'
+                ? 'QUERYING...'
+                : stacStatus === 'empty'
+                ? 'NO SCENES'
+                : stacStatus === 'error'
+                ? 'ERROR'
+                : 'IDLE'}
+            </span>
+          </div>
+
+          {/* AOI preset from real sector pins */}
+          <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+            <div>
+              <span className="text-slate-500 block">AOI PRESET (SECTOR):</span>
+              <select
+                id="ingestion-stac-sector"
+                value={stacSectorPreset}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setStacSectorPreset(id);
+                  const pin = TACTICAL_PINS.find((p) => p.id === id);
+                  if (pin) {
+                    setStacLat(pin.lat);
+                    setStacLon(pin.lon);
+                  }
+                }}
+                className="w-full mt-0.5 bg-[#0E131E] border border-[#1E273A] rounded px-1.5 py-1 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-cyan-500/50"
+              >
+                {TACTICAL_PINS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.id})
+                  </option>
+                ))}
+                <option value="custom">CUSTOM COORDINATES</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              <div>
+                <span className="text-slate-500 block">LAT:</span>
+                <input
+                  id="ingestion-stac-lat"
+                  type="number"
+                  step="0.0001"
+                  value={stacLat}
+                  onChange={(e) => setStacLat(parseFloat(e.target.value))}
+                  className="w-full mt-0.5 bg-[#0E131E] border border-[#1E273A] rounded px-1.5 py-1 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
+              <div>
+                <span className="text-slate-500 block">LON:</span>
+                <input
+                  id="ingestion-stac-lon"
+                  type="number"
+                  step="0.0001"
+                  value={stacLon}
+                  onChange={(e) => setStacLon(parseFloat(e.target.value))}
+                  className="w-full mt-0.5 bg-[#0E131E] border border-[#1E273A] rounded px-1.5 py-1 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-cyan-500/50"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Collection + limit + search */}
+          <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+            <div>
+              <span className="text-slate-500 block">COLLECTION:</span>
+              <select
+                id="ingestion-stac-collection"
+                value={stacCollection}
+                onChange={(e) => setStacCollection(e.target.value as 'sentinel-2-l2a' | 'sentinel-1-grd')}
+                className="w-full mt-0.5 bg-[#0E131E] border border-[#1E273A] rounded px-1.5 py-1 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-cyan-500/50"
+              >
+                <option value="sentinel-2-l2a">Sentinel-2 L2A (Optical)</option>
+                <option value="sentinel-1-grd">Sentinel-1 GRD (SAR)</option>
+              </select>
+            </div>
+            <div>
+              <span className="text-slate-500 block">MAX SCENES:</span>
+              <select
+                id="ingestion-stac-limit"
+                value={stacLimit}
+                onChange={(e) => setStacLimit(parseInt(e.target.value, 10))}
+                className="w-full mt-0.5 bg-[#0E131E] border border-[#1E273A] rounded px-1.5 py-1 text-slate-200 font-mono text-[10px] focus:outline-none focus:border-cyan-500/50"
+              >
+                {[3, 5, 10].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                id="ingestion-stac-search-btn"
+                type="button"
+                onClick={handleLiveSTACSearch}
+                disabled={stacStatus === 'loading'}
+                className="w-full py-1.5 rounded bg-[#172A44] hover:bg-[#1F3A5F] disabled:opacity-60 border border-cyan-500/40 text-cyan-200 font-bold text-[10px] flex items-center justify-center space-x-1 transition-colors cursor-pointer"
+              >
+                {stacStatus === 'loading' ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Search className="w-3 h-3" />
+                )}
+                <span>{stacStatus === 'loading' ? 'SEARCHING' : 'SEARCH'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Honest error state — never a fabricated scene */}
+          {stacError && (
+            <div className="p-2 rounded bg-rose-950/50 border border-rose-500/60 text-[10px] font-mono text-rose-200 flex items-start space-x-1.5">
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-rose-400" />
+              <span>{stacError}</span>
+            </div>
+          )}
+
+          {/* Honest empty state */}
+          {stacStatus === 'empty' && !stacError && (
+            <div className="p-2 rounded bg-amber-950/40 border border-amber-500/40 text-[10px] font-mono text-amber-300 flex items-start space-x-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" />
+              <span>No scenes returned from the live catalog in this AOI/window. Nothing fabricated — adjust coordinates or collection.</span>
+            </div>
+          )}
+
+          {/* Live scene results */}
+          {stacStatus === 'online' && stacResults.length > 0 && (
+            <div className="space-y-1.5 pt-0.5">
+              {stacResults.map((scene, idx) => (
+                <div
+                  key={scene.id || idx}
+                  className="p-2 rounded bg-[#0A0D14] border border-[#1E2536] flex items-center space-x-2 text-[10px]"
+                >
+                  {scene.thumbnail_url || scene.quicklook_url ? (
+                    <img
+                      src={scene.thumbnail_url || scene.quicklook_url}
+                      alt="Live STAC Scene Thumbnail"
+                      className="w-10 h-10 object-cover rounded border border-[#26354C] shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-[#121824] rounded border border-[#20293B] flex items-center justify-center shrink-0">
+                      <Satellite className="w-4 h-4 text-slate-500" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-slate-200 font-semibold truncate">
+                      {scene.sensor || stacCollection.toUpperCase()}
+                    </div>
+                    <div className="text-slate-400 text-[9px] truncate">ID: {scene.id}</div>
+                    <div className="text-slate-500 text-[9px] flex items-center space-x-2">
+                      <span>
+                        {scene.datetime ? new Date(scene.datetime).toLocaleString() : 'Unknown'}
+                      </span>
+                      {typeof scene.cloud_cover === 'number' && (
+                        <span>• Cloud: {scene.cloud_cover.toFixed(1)}%</span>
+                      )}
+                      {scene.polarizations && (
+                        <span>
+                          • {Array.isArray(scene.polarizations) ? scene.polarizations.join('/') : 'VV/VH'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="text-[9px] text-slate-500 leading-snug border-t border-[#161F2E] pt-1">
+            Live query against AWS Element84 (Sentinel-2) / Microsoft Planetary Computer (Sentinel-1). Failures surface here honestly — no cached or invented scenes.
+          </p>
         </div>
 
         {/* Pre-Calibrated Tactical GeoTIFF Catalog */}

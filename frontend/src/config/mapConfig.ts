@@ -89,14 +89,18 @@ export function createMapLibreStyle(mode: BasemapMode, projectionType: Projectio
 
 /**
  * Bi-temporal T1 Baseline Style (Pre-Event Epoch)
- * Renders a calibrated multi-spectral baseline with distinct historical CIR (Color-Infrared) 
- * tonal calibration to clearly reveal vegetation, urban, and hydrological changes against contemporary T2.
- * Features an opaque dark space background to eliminate underlying canvas ghosting.
+ *
+ * Plain, non-hue-rotated basemap used as the backdrop under the swipe map's
+ * real T1 sector raster overlay. The old raster-hue-rotate(160) "CIR
+ * simulation" was standing in for real T1 imagery and is removed — the real
+ * T1 raster is now loaded directly as an 'image' source (see MapCanvas.tsx
+ * effect #7). If a CIR/NIR toggle is desired it must be an explicit user
+ * choice, not the default when comparing T1 vs T2.
  */
 export function createBitemporalBaselineStyle(projectionType: ProjectionMode = 'globe'): StyleSpecification {
   return {
     version: 8,
-    name: 'SatQuery Bi-Temporal T1 Baseline (Pre-Event Archival)',
+    name: 'SatQuery Bi-Temporal Basemap Context',
     glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
     projection: { type: projectionType },
     sources: {
@@ -106,7 +110,7 @@ export function createBitemporalBaselineStyle(projectionType: ProjectionMode = '
           TILE_SOURCES.esriSatellite,
         ],
         tileSize: 256,
-        attribution: 'T1 Baseline: Sentinel-2 / Cartosat Calibrated Archive',
+        attribution: 'Esri, Maxar, Earthstar Geographics (context basemap)',
         maxzoom: 19,
       },
       't1-reference-tiles': {
@@ -136,11 +140,10 @@ export function createBitemporalBaselineStyle(projectionType: ProjectionMode = '
         maxzoom: 22,
         paint: {
           'raster-opacity': 1.0,
-          'raster-contrast': 0.35,
-          'raster-saturation': 0.45,
-          'raster-brightness-min': 0.05,
-          'raster-brightness-max': 0.95,
-          'raster-hue-rotate': 160, // Multi-Spectral Color-Infrared (CIR) simulation: vegetation in copper/red, water in deep navy, urban in cyan
+          'raster-contrast': 0.14,
+          'raster-saturation': 0.35,
+          'raster-brightness-min': 0.04,
+          'raster-brightness-max': 1.0,
         },
       },
       {
@@ -150,7 +153,7 @@ export function createBitemporalBaselineStyle(projectionType: ProjectionMode = '
         minzoom: 1,
         maxzoom: 22,
         paint: {
-          'raster-opacity': 0.70,
+          'raster-opacity': 0.65,
         },
       },
     ],

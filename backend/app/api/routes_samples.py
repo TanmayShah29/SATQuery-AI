@@ -159,3 +159,36 @@ def get_sector_timeline(sector_id: str, time_range: str = "30d"):
     from ..engine.sector_assets import SectorAssetManager
     return SectorAssetManager.get_sector_timeline(sector_id, time_range)
 
+
+@router.get("/sector-diff-heatmap/{sector_id}")
+def get_sector_diff_heatmap(sector_id: str, sensitivity: float = 1.0):
+    """
+    Renders the raw radiometric delta between a sector's T1 and T2 rasters as a
+    false-color magnitude heatmap PNG. Unchanged pixels are dark blue; increasing
+    change ramps through teal/green to amber/red. This is the raw magnitude of
+    change, not polygon outlines — for visualizing WHERE and HOW MUCH the surface
+    moved between epochs.
+    """
+    from io import BytesIO
+    from fastapi.responses import Response
+    from ..engine.sector_assets import SectorAssetManager
+    from ..engine.change_detector import BiTemporalChangeDetector
+
+    profile, t1, t2, _sar = SectorAssetManager.get_sector_rasters(sector_id)
+    if not t1 or not t2:
+        raise HTTPException(status_code=404, detail=f"No T1/T2 rasters for sector {sector_id}")
+
+    heatmap = BiTemporalChangeDetector.render_diff_heatmap(
+        t1, t2, bbox=profile.bounds, sensitivity=sensitivity
+    )
+    if heatmap is None:
+        raise HTTPException(status_code=500, detail="Diff heatmap render failed")
+
+    buf = BytesIO()
+    heatmap.save(buf, format="PNG")
+    headers = {
+        "X-Imagery-Distinct": str(profile.imagery_distinct).lower(),
+        "X-Imagery-Origin": profile.imagery_origin,
+    }
+    return Response(content=buf.getvalue(), media_type="image/png", headers=headers)
+

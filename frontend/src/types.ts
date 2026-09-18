@@ -121,6 +121,10 @@ export interface QueryTelemetry {
   total_latency_ms?: number;
   live_satellite_stream?: any;
   ai_engine_active?: string;
+  imagery_origin?: string | null;
+  imagery_distinct?: boolean | null;
+  raster_is_georeferenced?: boolean | null;
+  geographic_extent_verified?: boolean | null;
 }
 
 export interface LiveSatelliteStream {

@@ -376,12 +376,12 @@ try {
   }
 
   // --- 4. No unexpected console errors ---------------------------------------
-  const realErrors = consoleErrors.filter(
-    (e) =>
-      !/WebGL|SwiftShader|reticle|net::ERR_CONNECTION_REFUSED|Failed to load resource: net::ERR_|React DevTools/i.test(
-        e
-      )
-  );
+const realErrors = consoleErrors.filter(
+      (e) =>
+        !/WebGL|SwiftShader|net::ERR_CONNECTION_REFUSED|Failed to load resource: net::ERR_|React DevTools/i.test(
+          e
+        )
+    );
   record('no unexpected console errors', realErrors.length === 0, realErrors.slice(0, 3).join(' | '));
 
   exitCode = results.some((r) => r.ok === false) ? 1 : 0;
