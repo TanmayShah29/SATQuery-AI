@@ -257,8 +257,8 @@ class RealTimeVLMAgent:
                 f"Provide a concise, professional geospatial intelligence assessment (1 to 2 short paragraphs), "
                 f"grounded ONLY in the telemetry above.\n"
                 f"Constraints:\n"
-                f"- There is NO InSAR/DInSAR interferometric processing in this system. Never claim Sentinel-1 DInSAR, "
-                f"interferometry or displacement-velocity measurements.\n"
+                f"- This system performs radiometric and backscatter analysis only. "
+                f"Do not reference radar phase, coherence, or displacement measurement techniques.\n"
                 f"- Label proxies as proxies. If a value is 'n/a', state that it was not measured.\n"
                 f"- Do not invent scene IDs, dates, sensors or cloud figures beyond the telemetry.\n"
             )
@@ -278,6 +278,17 @@ class RealTimeVLMAgent:
                 data = resp.json()
                 text = data.get("response", "").strip()
                 if text:
+                    # Reject VLM output containing forbidden InSAR-related terminology.
+                    # LLMs paradoxically surface terms when explicitly told not to name them,
+                    # so a hard post-generation filter is the reliable guard.
+                    forbidden_terms = ['insar', 'dinsar', 'sbas', 'interferomet']
+                    text_lower = text.lower()
+                    if any(term in text_lower for term in forbidden_terms):
+                        logger.warning(
+                            "VLM output contained forbidden InSAR terminology; "
+                            "discarding VLM answer, falling back to computed DSP narrative."
+                        )
+                        return None
                     return text
         except Exception as e:
             logger.warning(f"Ollama local inference error: {e}")
