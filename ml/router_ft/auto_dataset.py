@@ -116,7 +116,7 @@ class Status:
     def log(self, msg):
         print(msg, flush=True)
         with self.lock:
-            self.data["log"] = (self.data["log"] + [f"{_now()[11:19]} {msg}"])[-40:]
+            self.data["log"] = (self.data["log"] + [f"{time.strftime('%H:%M:%S')} {msg}"])[-40:]
             self.save()
 
     def save(self):
@@ -396,7 +396,12 @@ def main():
     AUTO.mkdir(parents=True, exist_ok=True)
     GENERATED.mkdir(parents=True, exist_ok=True)
     st = Status()
-    generate.WAIT_LOG = st.log
+    def _on_wait(model, wait_s, msg):  # Groq rate limit: show when each model can be called again
+        with st.lock:
+            st.data.setdefault("waits", {})[model] = datetime.fromtimestamp(time.time() + wait_s, timezone.utc).isoformat(timespec="seconds")
+        st.log(msg)
+
+    generate.WAIT_LOG = _on_wait
 
     def _on_term(*_):  # the dashboard's Stop button
         st.data["state"] = "stopped"

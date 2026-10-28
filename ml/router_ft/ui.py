@@ -37,6 +37,11 @@ EXPECTED_S = {
 }
 
 
+# Groq free tier: each model allows 200K tokens/day, refilled gradually. Once a model hits it, this sets the pace.
+GROQ_TPD = 200_000
+TOKENS_PER_STEP = {"train_generate": 3000 / generate.BATCH, "train_check": 2600 / auto_dataset.LABEL_BATCH}  # per item, measured
+
+
 def _now():
     return datetime.now(timezone.utc)
 
@@ -68,6 +73,9 @@ def _stage_timing(s):
         progressed, span = s["done"] - n0, (_now() - t0).total_seconds()
         if progressed > 0 and span > 0:
             eta = max(0, (s["target"] - s["done"]) * span / progressed)
+    if s["status"] == "running" and s.get("target") and s["key"] in TOKENS_PER_STEP:
+        capped = (s["target"] - s["done"]) * TOKENS_PER_STEP[s["key"]] / (GROQ_TPD / 86400)
+        eta = max(eta or 0, capped)  # never promise faster than the daily token cap allows
     if eta is None and s["status"] in ("pending", "running", "failed"):
         eta = max(0, EXPECTED_S[s["key"]] - (elapsed if s["status"] == "running" else 0))
     return {"elapsed_s": round(elapsed), "eta_s": round(eta) if eta is not None else None}
@@ -88,6 +96,7 @@ def state():
     load = lambda p: json.loads(p.read_text()) if p.exists() else None
     return {
         "state": state_name, "error": (status or {}).get("error"), "log": (status or {}).get("log", [])[-8:],
+        "waits": {m: t for m, t in ((status or {}).get("waits") or {}).items() if t > _now().isoformat()},
         "started": (status or {}).get("started"), "finished": (status or {}).get("finished"),
         "stages": stages, "now": _now().isoformat(),
         "results": {

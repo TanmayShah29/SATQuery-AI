@@ -163,7 +163,7 @@ def build_messages(cell, guide_rows):
     return [{"role": "system", "content": RULES}, {"role": "user", "content": user}]
 
 
-WAIT_LOG = None  # callable that reports rate-limit waits; auto_dataset points it at the dashboard log
+WAIT_LOG = None  # callable(model, wait_s, msg) for rate-limit waits; auto_dataset points it at the dashboard
 
 
 def call_groq(model, messages, headers, max_retries=6, temperature=0.9):
@@ -183,7 +183,8 @@ def call_groq(model, messages, headers, max_retries=6, temperature=0.9):
             except Exception:
                 why = r.text[:160]
             resume = time.strftime("%H:%M", time.localtime(time.time() + wait))
-            (WAIT_LOG or print)(f"{model} {r.status_code}: waiting {f'{wait / 60:.0f} min' if wait >= 90 else f'{wait:.0f}s'}, resumes ~{resume} ({why})")
+            msg = f"{model} {r.status_code}: waiting {f'{wait / 60:.0f} min' if wait >= 90 else f'{wait:.0f}s'}, resumes ~{resume} ({why})"
+            WAIT_LOG(model, wait, msg) if WAIT_LOG else print(msg)
             time.sleep(wait)
             continue
         r.raise_for_status()

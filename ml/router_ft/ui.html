@@ -137,6 +137,7 @@ function render() {
   $("#eta").textContent = st === "done" ? "0" : "≈ " + dur(left);
   $("#banner").innerHTML = st === "failed" ? `<div class="banner bad"><b>Stopped:</b> ${esc(S.error)}. Fix the cause if it names one, then press Resume; finished work is kept.</div>`
     : st === "done" ? `<div class="banner good">Finished. The test set is frozen and train/val splits are built. Next is Phase 3 (baselines).</div>`
+    : st === "running" && S.waits && Object.keys(S.waits).length ? `<div class="banner info"><b>Not stuck: waiting on Groq's free-tier limit</b> of 200K tokens per model per day. It refills slowly, so progress now comes in small steps about every 15 min. Next call: ${Object.entries(S.waits).map(([m, t]) => `${esc(m)} at ${new Date(t).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}`).join(", ")}. Leave it running (keep the Mac awake); Stop/Resume doesn't make it faster.</div>`
     : st === "idle" ? `<div class="banner info">About ${dur(left)} on the Groq free tier. You can close this tab; the run keeps going, and Start resumes it if it stops.</div>` : "";
 
   // Train generation and checking overlap, which is why "train_check" can finish just after "train_generate".
