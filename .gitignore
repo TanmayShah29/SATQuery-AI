@@ -74,3 +74,4 @@ ml/router_ft/models/
 *.gguf
 results/router_ft/pipeline.pid
 results/router_ft/pipeline_status.json
+ml/router_ft/colab/*.zip

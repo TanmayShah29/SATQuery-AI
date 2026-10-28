@@ -1,0 +1,21 @@
+# Phase 4: LoRA fine-tune of the router (mlx-lm 0.32.2; options checked with `mlx_lm.lora --help`).
+model: mlx-community/Qwen2.5-1.5B-Instruct-4bit
+train: true
+data: ../../data/router_ft/sft
+fine_tune_type: lora
+optimizer: adam
+mask_prompt: true          # loss on the JSON answer only
+num_layers: 16
+lora_parameters: {rank: 8, dropout: 0.0, scale: 20.0}
+batch_size: 4
+grad_accumulation_steps: 2  # effective batch 8; batch 8 ran out of GPU memory on the 8 GB M1
+grad_checkpoint: true
+iters: 800                 # optimizer steps = 400 (~4.7 epochs over 677 rows)
+learning_rate: 5.0e-5
+steps_per_report: 10
+steps_per_eval: 100
+val_batches: -1
+save_every: 100            # every 50 optimizer steps; compared on val exact match, never on test
+adapter_path: adapters/qwen1.5b-r8
+max_seq_length: 320
+seed: 0

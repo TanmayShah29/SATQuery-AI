@@ -1,0 +1,40 @@
+{
+  "train": {
+    "original": 564,
+    "augmented": 113,
+    "total": 677,
+    "hints": {
+      "cross_modal": 405,
+      "single_image": 136,
+      "bitemporal": 107,
+      "both": 29
+    },
+    "intent": {
+      "sar_vqa": 82,
+      "visual_grounding": 88,
+      "crossmodal_fusion": 69,
+      "optical_vqa": 133,
+      "scene_captioning": 86,
+      "bitemporal_change": 219
+    }
+  },
+  "valid": {
+    "original": 93,
+    "augmented": 19,
+    "total": 112,
+    "hints": {
+      "cross_modal": 71,
+      "both": 5,
+      "bitemporal": 17,
+      "single_image": 19
+    },
+    "intent": {
+      "visual_grounding": 14,
+      "bitemporal_change": 37,
+      "optical_vqa": 22,
+      "scene_captioning": 14,
+      "sar_vqa": 14,
+      "crossmodal_fusion": 11
+    }
+  }
+}

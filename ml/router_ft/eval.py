@@ -25,14 +25,14 @@ from scipy.stats import binomtest
 from sklearn.metrics import f1_score
 
 import schema
-from common import PROBES, RESULTS, ROOT, SLICES, TEST, TEST_FREEZE, append_jsonl, hint_config_name, read_jsonl, \
+from common import DATA, PROBES, RESULTS, ROOT, SLICES, TEST, TEST_FREEZE, append_jsonl, hint_config_name, read_jsonl, \
     require_frozen_test
 
 EVAL = RESULTS / "eval"
 DOC = ROOT / "docs" / "router-ft" / "BASELINES.md"
 FIELDS = schema.LABEL_KEYS
 SET_FIELDS = ("secondary_intents", "entities")
-SPLITS = {"test": TEST, "probes": PROBES}
+SPLITS = {"test": TEST, "probes": PROBES, "val": DATA / "sft" / "valid_rows.jsonl"}  # val = val + its hint copies
 N_BOOT, SEED = 2000, 0
 
 
@@ -47,9 +47,9 @@ def make_router(args):
             return pred, {"latency_ms": round((time.perf_counter() - t0) * 1000, 2)}
         return run, None, {"router": "regex", "model": "AgentRouter (backend/app/agent/router.py)", "shots": 0}
     from routers.llm_router import LLMRouter
-    r = LLMRouter(args.router, args.model, shots=args.shots)
+    r = LLMRouter(args.router, args.model, shots=args.shots, adapter_path=args.adapter, prompt=args.prompt)
     meta = {"router": args.router, "model": args.model, "shots": len(r.shots),
-            "fewshot_ids": [x["id"] for x in r.shots]}
+            "fewshot_ids": [x["id"] for x in r.shots], "prompt": args.prompt, "adapter": args.adapter}
     if args.router == "groq" and args.model.startswith("openai/gpt-oss"):
         meta["reasoning_effort"] = "low"
     if args.batch > 1:
@@ -82,6 +82,23 @@ def cmd_run(args):
             append_jsonl(pred_path, {"id": row["id"], "pred": pred, **info})
             if i % 20 == 0 or i == len(todo):
                 print(f"  {i}/{len(todo)}", flush=True)
+
+
+def cmd_derive(args):
+    """The hint rule applied after the model, as a production router could do in code (see LOG.md)."""
+    from prepare_sft import to_bitemporal
+    for split_dir in (EVAL / args.src).iterdir():
+        gold = {r["id"]: r for r in read_jsonl(SPLITS[split_dir.name])}
+        out = EVAL / args.name / split_dir.name
+        out.mkdir(parents=True, exist_ok=True)
+        meta = json.loads((split_dir / "run.json").read_text())
+        (out / "run.json").write_text(json.dumps({**meta, "hint_override": True, "derived_from": args.src}, indent=2) + "\n")
+        rows = []
+        for p in read_jsonl(split_dir / "predictions.jsonl"):
+            if p["pred"] is not None and gold[p["id"]]["hints"]["has_bitemporal_pair"]:
+                p = {**p, "pred": to_bitemporal(p["pred"])}
+            rows.append(p)
+        (out / "predictions.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
 
 
 # ------------------------------------------------------------------ scoring
@@ -197,6 +214,9 @@ def _label(meta):
         return "regex AgentRouter"
     extra = f", reasoning {meta['reasoning_effort']}" if meta.get("reasoning_effort") else ""
     extra += f", {meta['batch']} queries/request" if meta.get("batch") else ""
+    if meta.get("adapter"):
+        return f"**fine-tuned** {meta['model'].split('/')[-1]} + LoRA ({meta['router']}{', hint rule in code' if meta.get('hint_override') else ''})"
+    extra += ", hint rule in code" if meta.get("hint_override") else ""
     return f"{meta['model']} ({meta['router']}, {meta['shots']}-shot{extra})"
 
 
@@ -293,9 +313,14 @@ def main():
     r.add_argument("--splits", nargs="+", default=["test", "probes"], choices=list(SPLITS))
     r.add_argument("--limit", type=int, default=None)
     r.add_argument("--batch", type=int, default=1, help="queries per request (API reference only; see BASELINES.md)")
+    r.add_argument("--adapter", default=None, help="LoRA adapter directory (fine-tuned model)")
+    r.add_argument("--prompt", default="rules", choices=["rules", "sft"])
+    d = sub.add_parser("derive", help="copy a run, enforcing 'bitemporal pair => bitemporal_change' in code")
+    d.add_argument("--src", required=True)
+    d.add_argument("--name", required=True)
     sub.add_parser("report")
     args = p.parse_args()
-    {"run": cmd_run, "report": cmd_report}[args.cmd](args)
+    {"run": cmd_run, "report": cmd_report, "derive": cmd_derive}[args.cmd](args)
 
 
 if __name__ == "__main__":

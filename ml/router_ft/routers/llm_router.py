@@ -80,13 +80,16 @@ def build_batch_messages(items, shots):
 class LLMRouter:
     """route(query, hints) -> (decision | None, info). info has raw text, errors and latency."""
 
-    def __init__(self, backend: str, model: str, shots: int = 0, max_tokens: int = 300):
-        self.backend, self.model, self.max_tokens = backend, model, max_tokens
-        self.shots = fewshot_examples() if shots else []
+    def __init__(self, backend: str, model: str, shots: int = 0, max_tokens: int = 300,
+                 adapter_path: Optional[str] = None, prompt: str = "rules"):
+        """prompt="rules": the labelling rules as system prompt (baselines). prompt="sft": the one-line
+        system prompt the fine-tuned model was trained with (prepare_sft.SYSTEM), no rules, no shots."""
+        self.backend, self.model, self.max_tokens, self.prompt = backend, model, max_tokens, prompt
+        self.shots = fewshot_examples() if shots and prompt == "rules" else []
         if backend == "mlx":
             from mlx_lm import load
             from mlx_lm.sample_utils import make_sampler
-            self._mlx_model, self._tok = load(model)
+            self._mlx_model, self._tok = load(model, adapter_path=adapter_path)
             self._sampler = make_sampler(temp=0.0)
         elif backend == "groq":
             self._headers = generate._client_headers()
@@ -112,7 +115,12 @@ class LLMRouter:
 
     def route(self, query: str, hints: Dict[str, bool]):
         t0 = time.perf_counter()
-        text = self._complete(build_messages(query, hints, self.shots))
+        if self.prompt == "sft":
+            from prepare_sft import SYSTEM
+            messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": _user_turn(query, hints)}]
+        else:
+            messages = build_messages(query, hints, self.shots)
+        text = self._complete(messages)
         latency_ms = (time.perf_counter() - t0) * 1000
         pred, errors = parse_reply(text)
         return pred, {"raw": text, "errors": errors, "latency_ms": round(latency_ms, 1)}
