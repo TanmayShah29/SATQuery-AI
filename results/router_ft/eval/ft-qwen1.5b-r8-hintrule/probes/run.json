@@ -1,0 +1,12 @@
+{
+  "router": "mlx",
+  "model": "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
+  "shots": 0,
+  "fewshot_ids": [],
+  "prompt": "sft",
+  "adapter": "adapters/qwen1.5b-r8-best",
+  "split": "probes",
+  "test_sha256": null,
+  "hint_override": true,
+  "derived_from": "ft-qwen1.5b-r8"
+}

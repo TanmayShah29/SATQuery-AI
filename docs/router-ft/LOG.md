@@ -414,3 +414,44 @@ commits it when the run ends.
 - Latency (p50): regex 0.17 ms; 3B Ollama 3.7 s; 1.5B MLX 5.5 s (0-shot) and 10 s (12-shot),
   dominated by prefill of the ~1.7K-token prompt. A fine-tuned model can drop the rules and
   examples from the prompt.
+
+## 2026-10-28: Phase 4. LoRA fine-tune of Qwen2.5-1.5B (MLX)
+
+**Data** (`prepare_sft.py` → `data/router_ft/sft/`): chat format with a one-line system prompt and
+the same hints + query user turn as the baselines; no rules, no examples. Bitemporal-mode copies
+were added (113 train, 19 val), labelled by the GUIDELINES §6 rule (intent → bitemporal_change; the
+text's fusion/grounding/captioning requests → secondaries; other fields unchanged), from train and
+val rows only, every label schema-validated. Totals: 677 train, 112 val.
+
+**Training** (`lora_config.yaml`, mlx-lm 0.32.2, options checked with `--help`): rank 8, scale 20,
+last 16 layers, all seven projections, Adam lr 5e-5, loss on the answer only, 800 micro-batches
+of 4 with 2-step accumulation (400 optimizer steps, ~4.7 epochs). Batch 8 ran out of GPU memory on
+the 8 GB M1 at step 1, hence 4×2 and gradient checkpointing. 92 min wall time, at about 20–30
+tokens/s because the Mac was swapping. Validation loss: 3.50 → 0.050 (100) → 0.034 (700) → 0.050 (800).
+
+**Checkpoint selection** (`select_checkpoint.py`, val only): exact match 40.2 / 56.3 / 58.0 / 65.2 /
+62.5 / 61.6 / **69.6** / 67.9 at steps 100–800. Step 700 selected.
+
+**Test, run once** (189 silver rows; full tables in BASELINES.md):
+
+| Router | exact | Δ vs regex | intent acc | valid | p50 latency |
+|---|---|---|---|---|---|
+| regex AgentRouter | 31.7 [24.9, 38.1] | | 61.9 | 100 | 0.17 ms |
+| qwen2.5:3b, 12-shot (best prompted) | 47.1 [40.2, 54.0] | +15.3 | 70.4 | 83.1 | 3.7 s |
+| **Qwen2.5-1.5B + LoRA** | **59.8 [52.4, 66.7]** | **+28.0 [18.5, 37.1], McNemar p = 6e-8** | 79.9 | 89.9 | 1.8 s |
+
+It beats regex on every slice except hint_driven (50.0 vs 57.1, n = 14) and paraphrase is about
+level (46.5 vs 41.9). The biggest gains are on compound (62.5 vs 4.2) and keyword_trap (75.0 vs 17.9).
+Probes: see BASELINES.md.
+
+**Findings for Phase 5:**
+- 19 of 189 outputs (10%) are invalid: an off-vocabulary entity (9, e.g. "sar"), cloud=true without
+  fusion (8), or an off-grammar temporal value (2). Constrained decoding (Ollama structured outputs
+  with a JSON schema with enums) should remove most of these; measure it.
+- The hint augmentation worked: in bitemporal mode every valid output is bitemporal_change (9/14);
+  the other 5 are invalid outputs. Enforcing the hint rule in code therefore changed nothing
+  (`ft-qwen1.5b-r8-hintrule` = 59.8); it only matters together with a fallback for invalid output.
+
+**3B stretch run (Colab):** `colab/finetune_3b.ipynb` mirrors these settings with QLoRA on a T4
+and exports GGUF Q4_K_M. Training finished; the merge step failed on Colab's old torchao (fixed in
+the notebook, a33a4da) and the session restarted. Recovery in progress; results TBD.
