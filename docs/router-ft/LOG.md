@@ -175,3 +175,66 @@ measurement.
 The guideline examples and the probes are seen by the generator and in prompt
 design. They must not be reused or lightly paraphrased in the test set, and the
 Phase 2 near-duplicate check will compare test against both.
+
+---
+
+## 2026-10-28 · Phase 2 (part 1): tooling, before the test set exists
+
+### Guidelines accepted without an external review
+
+The project owner delegated decisions to me ("make the best possible decisions").
+Guidelines v1.0 are accepted unchanged. **Risk:** no second person checked the
+rules before labelling started. The blind re-label (kappa) is now the only check
+on whether the rules are learnable, so a low kappa means fix the guidelines
+before training.
+
+### The large-model reference changes: Llama 3.3 70B is no longer on Groq
+
+`GET /openai/v1/models` with this key lists `openai/gpt-oss-120b`,
+`openai/gpt-oss-20b`, `qwen/qwen3.8-27b` and `allam-2-7b`.
+`llama-3.3-70b-versatile` returns `404 model_not_found`. The free tier gives
+**1,000 requests/day and 8,000 tokens/minute** per model (from response headers).
+
+- **Reference baseline (Phase 3): `openai/gpt-oss-120b`**, the largest model
+  available. It is a reasoning model: with `max_tokens=5` it returned an empty
+  string (all tokens went to hidden reasoning). With `reasoning_effort="low"`
+  it answered correctly. The effort setting will be reported with its results.
+- **Generator: both `gpt-oss-120b` and `qwen3.8-27b`**, half the calls each.
+  Two generators give more varied phrasing, and the per-generator acceptance
+  rate becomes a reportable comparison. Overlap with the reference baseline
+  is acceptable because the test set is hand-written, and the labels are
+  human-reviewed against the guidelines rather than copied from the generator.
+
+### Rule kept despite the delegation
+
+The test set is still written by the project owner, by hand, before generation.
+That is the core of the project's honesty claim, so "make the decisions"
+doesn't extend to writing the measurement. `generate.py` and `build_splits.py`
+call `require_frozen_test`, which checks `test.jsonl` against the sha256
+recorded by `test_writer.py freeze`; they refuse to run otherwise.
+
+### Tools written (`ml/router_ft/`)
+
+| Script | Does |
+|---|---|
+| `test_writer.py` | `add` queries, `label` them later, `stats` against TEST_SET_PLAN.md, `freeze` (sha256), blind `relabel` of a fixed random 50 (seed 2026), blocked for 3 days after freezing. Never shows model or regex output. |
+| `generate.py` | 106 planned calls × 10 queries over slice × intent × UI-mode cells, proportional intent allocation, randomised persona/region/register. Prompt = compact rules + 6 guideline examples. Saves proposals with their validation result; resumable; paced for 8k TPM. |
+| `review.py` | a/e/r/s/u/q over a fixed shuffled order, generator hidden. `stats` gives accept/edit/reject per generator, which fields edits changed, and reject reasons. |
+| `build_splits.py` | Exact dedup, char 3–5-gram TF-IDF near-dup removal vs test/probes/guideline examples (≥ 0.85, with a sensitivity table from 0.70 to 0.95) and within the pool (≥ 0.90), stratified 100-row val. |
+| `agreement.py` | Cohen's kappa for intent, raw agreement per field, the list of disagreements. |
+
+First version of the plan drew intents at random per cell and came out lopsided
+(31 change calls vs 10 SAR). Replaced with largest-remainder allocation.
+
+**Tested end to end on scratch data** (`ROUTER_FT_DATA` override, Groq call
+mocked, keystrokes piped): the duplicate check, the temporal grammar re-prompt,
+the cloud/fusion coupling redo, the freeze lock, the generator's refusal
+before freezing, resumption, invalid-proposal flagging, the review undo and
+the invalid-accept guard, the 3-day relabel block, and kappa (0.5 on a toy
+case, checked by hand). A planted near-copy of a test query in the generated
+pool was removed by `build_splits.py` at similarity 1.0. No real data was
+generated.
+
+**Known edge:** with a tiny pool, the stratified split can put every row in val
+(seen in the toy test). It is harmless at the planned pool size of about 700,
+and `split_report.json` reports the actual counts.
