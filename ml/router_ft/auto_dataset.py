@@ -18,6 +18,8 @@ Run from ml/router_ft:  uv run python auto_dataset.py   (or press Start in ui.py
 """
 
 import json
+import os
+import signal
 import math
 import random
 import threading
@@ -81,7 +83,7 @@ class Status:
     ]
 
     def __init__(self):
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()  # re-entrant: the Stop handler may log while the main thread holds it
         prev = json.loads(PIPELINE_STATUS.read_text()) if PIPELINE_STATUS.exists() else {}
         old = {s["key"]: s for s in prev.get("stages", [])}
         self.data = {"started": _now(), "finished": None, "state": "running", "error": None, "log": prev.get("log", [])[-40:],
@@ -394,6 +396,14 @@ def main():
     AUTO.mkdir(parents=True, exist_ok=True)
     GENERATED.mkdir(parents=True, exist_ok=True)
     st = Status()
+    generate.WAIT_LOG = st.log
+
+    def _on_term(*_):  # the dashboard's Stop button
+        st.data["state"] = "stopped"
+        st.log("stopped by user; Start resumes")
+        os._exit(0)
+
+    signal.signal(signal.SIGTERM, _on_term)
     st.log("pipeline started")
     try:
         headers = generate._client_headers()

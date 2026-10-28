@@ -163,16 +163,27 @@ def build_messages(cell, guide_rows):
     return [{"role": "system", "content": RULES}, {"role": "user", "content": user}]
 
 
+WAIT_LOG = None  # callable that reports rate-limit waits; auto_dataset points it at the dashboard log
+
+
 def call_groq(model, messages, headers, max_retries=6, temperature=0.9):
     body = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": 4000,
             "response_format": {"type": "json_object"}}
     if model.startswith("openai/gpt-oss"):
         body["reasoning_effort"] = "low"
-    for attempt in range(max_retries):
+    attempt = 0
+    while attempt < max_retries:
         r = httpx.post(GROQ_URL, headers=headers, json=body, timeout=120)
+        if r.status_code != 429:
+            attempt += 1  # rate-limit waits don't use up retries: the daily token cap can mean many of them
         if r.status_code == 429 or r.status_code >= 500:
             wait = float(r.headers.get("retry-after", 2 ** attempt * 5))
-            print(f"    {r.status_code}; waiting {wait:.0f}s")
+            try:
+                why = r.json()["error"]["message"].split(". Please")[0]
+            except Exception:
+                why = r.text[:160]
+            resume = time.strftime("%H:%M", time.localtime(time.time() + wait))
+            (WAIT_LOG or print)(f"{model} {r.status_code}: waiting {f'{wait / 60:.0f} min' if wait >= 90 else f'{wait:.0f}s'}, resumes ~{resume} ({why})")
             time.sleep(wait)
             continue
         r.raise_for_status()

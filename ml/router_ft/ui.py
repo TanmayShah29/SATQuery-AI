@@ -46,6 +46,11 @@ def _pid_alive():
         return None
     try:
         pid = int(PID_FILE.read_text().strip())
+        try:
+            if os.waitpid(pid, os.WNOHANG)[0] == pid:
+                return None  # our child exited; reap it so it doesn't linger as a zombie
+        except ChildProcessError:
+            pass  # started by an earlier dashboard; fall back to the signal check
         os.kill(pid, 0)
         return pid
     except (OSError, ValueError):
