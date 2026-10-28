@@ -18,7 +18,7 @@ from collections import Counter
 from datetime import datetime, timezone
 
 import schema
-from common import (HINT_CONFIGS, TEST, TEST_FREEZE, TEST_RELABEL, hint_config_name,
+from common import (HINT_CONFIGS, TEST, log_activity, TEST_FREEZE, TEST_RELABEL, hint_config_name,
                     read_jsonl, sha256, test_is_frozen, write_jsonl)
 from labeling import ask_label, ask_slices, show_label
 
@@ -67,6 +67,7 @@ def cmd_add(_):
         rows.append({"id": f"test-{len(rows) + 1:04d}", "query": query, "hints": hints,
                      "label": None, "slices": slices, "notes": notes})
         write_jsonl(TEST, rows)
+        log_activity("write", rows[-1]["id"])
         print("  saved.\n")
     print(f"{len(rows)} rows in {TEST.name}.")
 
@@ -87,6 +88,7 @@ def cmd_label(_):
         if extra:
             r["notes"] = (r["notes"] + " | " if r["notes"] else "") + extra
         write_jsonl(TEST, rows)
+        log_activity("label", r["id"])
         print("  saved.\n")
 
 

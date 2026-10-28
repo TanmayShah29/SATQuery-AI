@@ -238,3 +238,40 @@ generated.
 **Known edge:** with a tiny pool, the stratified split can put every row in val
 (seen in the toy test). It is harmless at the planned pool size of about 700,
 and `split_report.json` reports the actual counts.
+
+---
+
+## 2026-10-28 · Phase 2 (part 2): a local dashboard for the human steps
+
+On request, I added a temporary local web UI, `ml/router_ft/ui.py` + `ui.html`
+(standard library only, binds to 127.0.0.1:8765). It is a front end over the
+same files and rules as the CLIs; nothing about the dataset rules changed:
+schema validation on every label, no edits after freezing, blind review, and
+a blind re-label that opens 3 days after freezing.
+
+- **Dashboard:** one card per Phase 2 step, each with a start button (or the
+  reason it is locked), a progress bar, and active time, pace and time left.
+  Plus a cumulative-progress line chart and a time-per-step bar chart. The
+  first version had a sidebar, a theme switcher and table filters; the owner
+  asked for "just start buttons and graphs of progress and time", so those
+  were removed.
+- **Time tracking:** writing and labelling events go to
+  `data/router_ft/activity.jsonl` (the UI and `test_writer.py` both log).
+  Reviews and re-labels already carry timestamps. Active time = sum of gaps
+  between consecutive items, ignoring gaps over 5 minutes (counted as breaks);
+  pace = median gap; time left = remaining items × pace. These are estimates
+  for planning, not results.
+- **Chart colours:** the four series colours were checked with the dataviz
+  palette validator against this page's light and dark surfaces. Both pass;
+  light mode flags low contrast for two hues, so every line also has a direct
+  text label.
+- **Bugs found while testing in the browser, fixed:**
+  - the review form marked every item as edited on load (validation fired the
+    change callback);
+  - the dashboard's periodic refresh rebuilt the cards and could swallow a
+    click (it now re-renders only when the data changed);
+  - the UI mode stayed on whatever was used last, which could silently give
+    the next test query the wrong hints (it now resets to the default after
+    each save).
+- An edit that changes nothing is recorded as an accept, so the acceptance
+  rate isn't deflated by no-op edits.
