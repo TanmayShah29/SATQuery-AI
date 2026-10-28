@@ -1,0 +1,258 @@
+{
+  "n": 189,
+  "valid_rate": 0.13756613756613756,
+  "exact": 0.026455026455026454,
+  "exact_ci": [
+    0.005291005291005291,
+    0.05291005291005291
+  ],
+  "field_acc": {
+    "intent": 0.07936507936507936,
+    "secondary_intents": 0.042328042328042326,
+    "entities": 0.1111111111111111,
+    "temporal": 0.13756613756613756,
+    "cloud_piercing_required": 0.12698412698412698
+  },
+  "intent_acc_ci": [
+    0.042328042328042326,
+    0.1164021164021164
+  ],
+  "intent_acc_lenient": 0.48148148148148145,
+  "intent_macro_f1": 0.14257000823774366,
+  "intent_macro_f1_ci": [
+    0.08483332713813344,
+    0.1975966560049587
+  ],
+  "intent_f1": {
+    "bitemporal_change": 0.078,
+    "crossmodal_fusion": 0.0,
+    "sar_vqa": 0.205,
+    "visual_grounding": 0.069,
+    "scene_captioning": 0.452,
+    "optical_vqa": 0.051
+  },
+  "intent_confusion": {
+    "bitemporal_change": {
+      "invalid": 44,
+      "bitemporal_change": 2,
+      "visual_grounding": 2,
+      "sar_vqa": 1
+    },
+    "crossmodal_fusion": {
+      "invalid": 24,
+      "sar_vqa": 2
+    },
+    "sar_vqa": {
+      "invalid": 27,
+      "sar_vqa": 4
+    },
+    "visual_grounding": {
+      "visual_grounding": 1,
+      "invalid": 21
+    },
+    "scene_captioning": {
+      "invalid": 14,
+      "scene_captioning": 7,
+      "visual_grounding": 2
+    },
+    "optical_vqa": {
+      "invalid": 33,
+      "scene_captioning": 1,
+      "visual_grounding": 2,
+      "optical_vqa": 1,
+      "sar_vqa": 1
+    }
+  },
+  "set_fields": {
+    "secondary_intents": {
+      "precision": 0.14285714285714285,
+      "recall": 0.10714285714285714,
+      "f1": 0.12244897959183672
+    },
+    "entities": {
+      "precision": 0.7142857142857143,
+      "recall": 0.10869565217391304,
+      "f1": 0.18867924528301885
+    }
+  },
+  "by_slice": {
+    "clean": {
+      "n": 35,
+      "exact": 0.0,
+      "intent_acc": 0.17142857142857143
+    },
+    "compound": {
+      "n": 24,
+      "exact": 0.041666666666666664,
+      "intent_acc": 0.041666666666666664
+    },
+    "hint_driven": {
+      "n": 14,
+      "exact": 0.0,
+      "intent_acc": 0.0
+    },
+    "keyword_trap": {
+      "n": 28,
+      "exact": 0.0,
+      "intent_acc": 0.03571428571428571
+    },
+    "negation": {
+      "n": 23,
+      "exact": 0.17391304347826086,
+      "intent_acc": 0.2608695652173913
+    },
+    "paraphrase": {
+      "n": 43,
+      "exact": 0.0,
+      "intent_acc": 0.0
+    },
+    "typo_hinglish": {
+      "n": 22,
+      "exact": 0.0,
+      "intent_acc": 0.045454545454545456
+    }
+  },
+  "by_hints": {
+    "bitemporal": {
+      "n": 14,
+      "exact": 0.0,
+      "intent_acc": 0.0
+    },
+    "cross_modal": {
+      "n": 152,
+      "exact": 0.006578947368421052,
+      "intent_acc": 0.06578947368421052
+    },
+    "single_image": {
+      "n": 23,
+      "exact": 0.17391304347826086,
+      "intent_acc": 0.21739130434782608
+    }
+  },
+  "latency_ms": {
+    "p50": 5505.5,
+    "p95": 12242.84
+  },
+  "probes": {
+    "n": 20,
+    "valid_rate": 0.15,
+    "exact": 0.0,
+    "exact_ci": [
+      0.0,
+      0.0
+    ],
+    "field_acc": {
+      "intent": 0.05,
+      "secondary_intents": 0.0,
+      "entities": 0.15,
+      "temporal": 0.15,
+      "cloud_piercing_required": 0.15
+    },
+    "intent_acc_ci": [
+      0.0,
+      0.15
+    ],
+    "intent_acc_lenient": 0.45,
+    "intent_macro_f1": 0.06666666666666667,
+    "intent_macro_f1_ci": [
+      0.0,
+      0.16666666666666666
+    ],
+    "intent_f1": {
+      "bitemporal_change": 0.0,
+      "crossmodal_fusion": 0.0,
+      "sar_vqa": 0.0,
+      "visual_grounding": 0.4,
+      "scene_captioning": 0.0,
+      "optical_vqa": 0.0
+    },
+    "intent_confusion": {
+      "bitemporal_change": {
+        "invalid": 7,
+        "scene_captioning": 1
+      },
+      "crossmodal_fusion": {
+        "invalid": 3
+      },
+      "sar_vqa": {
+        "invalid": 2
+      },
+      "visual_grounding": {
+        "invalid": 2,
+        "visual_grounding": 1
+      },
+      "scene_captioning": {
+        "invalid": 1,
+        "visual_grounding": 1
+      },
+      "optical_vqa": {
+        "invalid": 2
+      }
+    },
+    "set_fields": {
+      "secondary_intents": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "entities": {
+        "precision": 1.0,
+        "recall": 0.05555555555555555,
+        "f1": 0.10526315789473684
+      }
+    },
+    "by_slice": {
+      "clean": {
+        "n": 6,
+        "exact": 0.0,
+        "intent_acc": 0.16666666666666666
+      },
+      "compound": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "hint_driven": {
+        "n": 1,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "keyword_trap": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "negation": {
+        "n": 2,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "paraphrase": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "typo_hinglish": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      }
+    },
+    "by_hints": {
+      "bitemporal": {
+        "n": 1,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "cross_modal": {
+        "n": 19,
+        "exact": 0.0,
+        "intent_acc": 0.05263157894736842
+      }
+    },
+    "latency_ms": {
+      "p50": 7980.35,
+      "p95": 10808.850000000002
+    }
+  }
+}

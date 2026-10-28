@@ -366,3 +366,51 @@ candidates both labelled, intent kappa 0.914, and the same keep/reject decision 
   thread silently, and the pipeline still "finished" with 67 candidates checked. Such
   responses are now retried, any checker error is logged and retried, and the training stage
   refuses to finish while any candidate is unchecked.
+
+## 2026-10-28: Phase 3. Eval harness and baselines
+
+**Harness:** `ml/router_ft/eval.py` (`run` is resumable; `report` writes
+[BASELINES.md](BASELINES.md) and per-run `metrics.json`). It refuses to run unless the test hash
+matches the freeze. Metric: *exact* = all five fields right; invalid output is wrong on every
+field. Also per-field accuracy, intent macro-F1, set F1 for secondary intents and entities,
+breakdowns by slice and UI hints, 95% percentile-bootstrap CIs (2,000 resamples), and against
+regex a paired bootstrap plus an exact McNemar test. "Intent (lenient)" reads the intent from
+replies that are JSON but break the schema, to separate "wrong" from "can't follow the format".
+
+**LLM baselines** (`routers/llm_router.py`) all get the same prompt: the labelling rules as
+system prompt, plus, for few-shot, 12 fixed examples drawn **from train only** (2 per intent,
+seed 3, ids in BASELINES.md) as chat turns. Temperature 0. Ollama gets `format=json` and
+`num_ctx=4096` (its 2,048 default would cut the prompt).
+
+**Decision: the gpt-oss-120b reference runs 10 queries per request.** Per-query it needs about
+460K tokens, over two days of Groq's 200K/day cap, which today's dataset run had already used.
+Batched, it is ~3K tokens per request and finishes overnight. This is how the silver labels were
+made too, but it is not identical to per-query routing, and BASELINES.md labels it as batched.
+A detached job (`results/router_ft/logs/finish_reference.sh`) regenerates BASELINES.md and
+commits it when the run ends.
+
+**Results** (exact match on 189 silver-labelled test rows, 95% CI):
+
+| Router | exact | intent acc | valid |
+|---|---|---|---|
+| regex AgentRouter | 31.7 [24.9, 38.1] | 61.9 | 100 |
+| qwen2.5:3b, Ollama, 12-shot | 47.1 [40.2, 54.0] | 70.4 | 83.1 |
+| Qwen2.5-1.5B-4bit, MLX, 12-shot | 16.9 [12.2, 22.8] | 30.7 | 61.9 |
+| Qwen2.5-1.5B-4bit, MLX, 0-shot | 2.6 [0.5, 5.3] | 7.9 | 13.8 |
+| gpt-oss-120b, Groq, 12-shot, batched | TBD (running) | TBD | TBD |
+
+**Findings for Phase 4:**
+- The fine-tuning base (1.5B) is far below regex when prompted. Most of its errors are format
+  errors: its lenient intent accuracy is 48–51% even where strict exact match is 3–17%. It
+  invents entity names ("water basins") and puts phrases into `secondary_intents`. Fine-tuning
+  should mostly have to teach the vocabulary, which is the easy part.
+- **Every prompted LLM scores 0% exact in bitemporal mode** (14 rows); regex scores 57%
+  because it hard-codes "bitemporal pair → bitemporal_change". The 3B model follows the text
+  ("backscatter" → sar_vqa) and ignores the hint rule. Training has only 23 such rows. Phase 4
+  should upsample them. Phase 5 could also enforce the rule in code, as regex does; if so,
+  report the model's score with and without that override.
+- qwen2.5:3b beats regex by +15.3 points [6.3, 24.3] (McNemar p = 0.0015) at about 3.7 s per
+  query. That is the bar a 1.5B fine-tune should clear, at lower latency.
+- Latency (p50): regex 0.17 ms; 3B Ollama 3.7 s; 1.5B MLX 5.5 s (0-shot) and 10 s (12-shot),
+  dominated by prefill of the ~1.7K-token prompt. A fine-tuned model can drop the rules and
+  examples from the prompt.

@@ -1,0 +1,8 @@
+{
+  "router": "mlx",
+  "model": "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
+  "shots": 0,
+  "fewshot_ids": [],
+  "split": "probes",
+  "test_sha256": null
+}

@@ -1,0 +1,7 @@
+{
+  "router": "regex",
+  "model": "AgentRouter (backend/app/agent/router.py)",
+  "shots": 0,
+  "split": "probes",
+  "test_sha256": null
+}

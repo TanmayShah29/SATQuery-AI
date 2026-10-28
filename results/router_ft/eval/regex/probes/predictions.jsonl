@@ -1,0 +1,20 @@
+{"id": "probe-01", "pred": {"intent": "optical_vqa", "secondary_intents": [], "entities": ["runway"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.14}
+{"id": "probe-02", "pred": {"intent": "crossmodal_fusion", "secondary_intents": ["scene_captioning"], "entities": [], "temporal": null, "cloud_piercing_required": true}, "latency_ms": 0.12}
+{"id": "probe-03", "pred": {"intent": "bitemporal_change", "secondary_intents": [], "entities": ["runway"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.11}
+{"id": "probe-04", "pred": {"intent": "bitemporal_change", "secondary_intents": ["visual_grounding"], "entities": ["maritime"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.15}
+{"id": "probe-05", "pred": {"intent": "crossmodal_fusion", "secondary_intents": [], "entities": [], "temporal": null, "cloud_piercing_required": true}, "latency_ms": 0.13}
+{"id": "probe-06", "pred": {"intent": "optical_vqa", "secondary_intents": [], "entities": [], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.16}
+{"id": "probe-07", "pred": {"intent": "optical_vqa", "secondary_intents": [], "entities": ["building", "maritime"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.14}
+{"id": "probe-08", "pred": {"intent": "bitemporal_change", "secondary_intents": ["scene_captioning"], "entities": [], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.16}
+{"id": "probe-09", "pred": {"intent": "crossmodal_fusion", "secondary_intents": [], "entities": ["maritime"], "temporal": null, "cloud_piercing_required": true}, "latency_ms": 0.12}
+{"id": "probe-10", "pred": {"intent": "optical_vqa", "secondary_intents": [], "entities": [], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.12}
+{"id": "probe-11", "pred": {"intent": "visual_grounding", "secondary_intents": [], "entities": ["excavation"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.13}
+{"id": "probe-12", "pred": {"intent": "sar_vqa", "secondary_intents": [], "entities": ["maritime"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.13}
+{"id": "probe-13", "pred": {"intent": "crossmodal_fusion", "secondary_intents": [], "entities": ["vegetation"], "temporal": null, "cloud_piercing_required": true}, "latency_ms": 0.11}
+{"id": "probe-14", "pred": {"intent": "bitemporal_change", "secondary_intents": [], "entities": ["flood"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.17}
+{"id": "probe-15", "pred": {"intent": "bitemporal_change", "secondary_intents": ["visual_grounding"], "entities": ["building"], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.15}
+{"id": "probe-16", "pred": {"intent": "bitemporal_change", "secondary_intents": ["scene_captioning"], "entities": [], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.1}
+{"id": "probe-17", "pred": {"intent": "sar_vqa", "secondary_intents": [], "entities": [], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.15}
+{"id": "probe-18", "pred": {"intent": "visual_grounding", "secondary_intents": [], "entities": [], "temporal": null, "cloud_piercing_required": false}, "latency_ms": 0.15}
+{"id": "probe-19", "pred": {"intent": "crossmodal_fusion", "secondary_intents": [], "entities": ["maritime"], "temporal": null, "cloud_piercing_required": true}, "latency_ms": 0.1}
+{"id": "probe-20", "pred": {"intent": "bitemporal_change", "secondary_intents": ["visual_grounding"], "entities": ["flood"], "temporal": "Pre-Event -> Post-Event", "cloud_piercing_required": false}, "latency_ms": 0.18}
