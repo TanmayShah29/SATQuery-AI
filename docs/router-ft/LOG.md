@@ -275,3 +275,52 @@ a blind re-label that opens 3 days after freezing.
     each save).
 - An edit that changes nothing is recorded as an accept, so the acceptance
   rate isn't deflated by no-op edits.
+
+---
+
+## 2026-10-28 · Phase 2 (part 3): switched to a fully automatic dataset pipeline
+
+**Decision (project owner):** no hand-written test set, no manual review, no re-label.
+"Just press start and then see." This reverses the Phase 0 rule that the test set is
+written by hand. It is the owner's call, and it changes what the results can claim, so
+the design below aims to keep as much of the evaluation's independence as possible:
+
+| Concern | How the pipeline handles it |
+|---|---|
+| Test labels without a human | Two models label each test query **blind and independently** (`qwen3.8-27b`, `gpt-oss-20b`); only rows with identical labels on all five fields are kept. Their agreement (Cohen's kappa on intent, raw per field) is reported. |
+| The reference baseline grading itself | `gpt-oss-120b` (the Phase 3 reference) **never labels test data**. It only writes training candidates. |
+| Test and train sharing style | Test queries come from `qwen3.8-27b` with no examples and its own persona/region lists; training from `gpt-oss-120b` with guideline examples and different lists. `build_splits.py` still removes near-duplicates. |
+| Train labels without review | A second model (`gpt-oss-20b`) re-labels each candidate blind; kept only if identical. |
+| Too few agreed test rows | Up to 3 rounds of ~360 candidates until at least 150 agree. |
+
+**What this costs:** the "silver" test set is filtered towards queries two models find
+unambiguous, so it is probably easier than real traffic. A shared blind spot of both
+labellers can't be detected. The write-up must say "silver labels" wherever it reports a
+number, and must not call them human-verified. An optional 30-row human spot-check
+would put a number on label accuracy. It isn't scheduled; that's the owner's call.
+
+**Implementation:** `auto_dataset.py` (stages test_generate → test_label → test_freeze
+→ train_generate ∥ train_check → splits), resumable at call level, with progress written to
+`results/router_ft/pipeline_status.json`. `ui.py`/`ui.html` was rebuilt around it: one
+Start/Stop/Resume button, per-stage progress with elapsed time and time left, a
+progress-over-time chart and a time-per-stage chart, and a results panel. The manual
+tools (`test_writer.py`, `review.py`, `agreement.py`) are unchanged and still work.
+
+**Tested:**
+- **Mocked Groq, full run:** a run with too few agreed rows correctly topped up with a
+  second round, then froze. Invalid training proposals were rejected, and the
+  dashboard showed all stages live through to the results panel.
+- **Real API, one call per stage, scratch folder:** all stages completed. On those 10
+  test candidates (one cell, all `sar_vqa`): 8 identical labels, and both disagreements
+  were on `entities`. The checker rejected 1 of 10 training candidates. This is a smoke
+  test, not a result.
+
+**Bugs found and fixed:**
+- the real `qwen3.8-27b` sometimes returns a bare JSON list instead of
+  `{"items": [...]}`, which the mocks didn't show; parsing now accepts a list, a wrapper
+  object, or plain strings;
+- a failed call let the pipeline continue into top-up rounds with nothing generated;
+  calls now retry 3 times, and a stage with lost calls stops with a resumable error;
+- kappa is `NaN` when only one intent occurs, which isn't valid JSON; it's now written as `null`;
+- `build_splits.py` put a small pool entirely into val; val is now capped at 1/7 of the pool;
+- stage clocks and targets were wrong around top-up rounds and the parallel checker.

@@ -90,10 +90,11 @@ def main():
     by_intent = defaultdict(list)
     for r in pool:
         by_intent[r["label"]["intent"]].append(r)
+    val_size = min(VAL_SIZE, len(pool) // 7)  # never let a small pool end up mostly in val
     val = []
     for intent, rows in sorted(by_intent.items()):
         rng.shuffle(rows)
-        val += rows[: round(VAL_SIZE * len(rows) / len(pool))]
+        val += rows[: round(val_size * len(rows) / len(pool))]
     val_ids = {r["id"] for r in val}
     train = [r for r in pool if r["id"] not in val_ids]
     rng.shuffle(train)

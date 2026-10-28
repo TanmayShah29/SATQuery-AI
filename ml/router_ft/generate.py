@@ -32,6 +32,7 @@ MODELS = ("openai/gpt-oss-120b", "qwen/qwen3.8-27b")
 BATCH = 10
 PLAN_SEED = 7
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+PACE_S = 25  # seconds per call per model on the 8k tokens/min free tier
 
 # Raw targets per slice, before review losses (~1060 candidates for ~700 kept).
 SLICE_TARGETS = {"clean": 160, "paraphrase": 200, "negation": 130, "typo_hinglish": 160,
@@ -94,14 +95,15 @@ def _client_headers():
     return {"Authorization": f"Bearer {key}"}
 
 
-def build_plan():
-    """Deterministic list of cells; call i is served by MODELS[i % 2]."""
-    rng = random.Random(PLAN_SEED)
-    intents = list(INTENT_WEIGHTS)
+def build_plan(slice_targets=SLICE_TARGETS, intent_weights=INTENT_WEIGHTS, seed=PLAN_SEED,
+               personas=PERSONAS, regions=REGIONS, batch=BATCH):
+    """Deterministic list of cells (one per API call). The defaults are the training plan."""
+    rng = random.Random(seed)
+    intents = list(intent_weights)
     text_intents = [i for i in intents if i != "bitemporal_change"]
     cells = []
-    for slice_name, target in SLICE_TARGETS.items():
-        n = round(target / BATCH)
+    for slice_name, target in slice_targets.items():
+        n = max(1, round(target / batch))
         if slice_name == "hint_driven":
             cells += [{"slice": slice_name, "intent": "bitemporal_change", "mode": "bitemporal",
                        "text_intent": text_intents[k % len(text_intents)]} for k in range(n)]
@@ -111,8 +113,8 @@ def build_plan():
     # Proportional (largest-remainder) intent allocation over the non-hint cells, then shuffled,
     # so the intent mix follows INTENT_WEIGHTS instead of the luck of random draws.
     open_cells = [c for c in cells if "intent" not in c]
-    total = sum(INTENT_WEIGHTS.values())
-    quotas = {i: len(open_cells) * w / total for i, w in INTENT_WEIGHTS.items()}
+    total = sum(intent_weights.values())
+    quotas = {i: len(open_cells) * w / total for i, w in intent_weights.items()}
     counts = {i: int(q) for i, q in quotas.items()}
     for i in sorted(quotas, key=lambda i: quotas[i] - counts[i], reverse=True)[: len(open_cells) - sum(counts.values())]:
         counts[i] += 1
@@ -124,8 +126,8 @@ def build_plan():
     rng.shuffle(cells)
     for i, c in enumerate(cells):
         c["call"] = i
-        c["persona"] = rng.choice(PERSONAS)
-        c["region"] = rng.choice(REGIONS)
+        c["persona"] = rng.choice(personas)
+        c["region"] = rng.choice(regions)
         c["register"] = rng.choice(REGISTERS)
     return cells
 
@@ -161,8 +163,8 @@ def build_messages(cell, guide_rows):
     return [{"role": "system", "content": RULES}, {"role": "user", "content": user}]
 
 
-def call_groq(model, messages, headers, max_retries=6):
-    body = {"model": model, "messages": messages, "temperature": 0.9, "max_tokens": 4000,
+def call_groq(model, messages, headers, max_retries=6, temperature=0.9):
+    body = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": 4000,
             "response_format": {"type": "json_object"}}
     if model.startswith("openai/gpt-oss"):
         body["reasoning_effort"] = "low"
@@ -177,6 +179,17 @@ def call_groq(model, messages, headers, max_retries=6):
         d = r.json()
         return d["choices"][0]["message"]["content"], d.get("usage", {})
     raise RuntimeError("too many retries")
+
+
+def parse_items(text, key):
+    """Models don't always honour the requested wrapper: accept {key: [...]}, a bare list, or
+    any single list value, and turn bare strings into {"query": ...}."""
+    obj = json.loads(text)
+    if isinstance(obj, dict):
+        obj = obj.get(key, next((v for v in obj.values() if isinstance(v, list)), []))
+    if not isinstance(obj, list):
+        return []
+    return [{"query": x} if isinstance(x, str) else x for x in obj if isinstance(x, (dict, str))]
 
 
 def _norm(q):
@@ -200,21 +213,23 @@ def main():
 
     require_frozen_test("generate training data")
     out = GENERATED / f"{args.model.split('/')[-1]}.jsonl"
-    existing = read_jsonl(out)
-    done_calls = {r["call"] for r in existing}
-    seen = {_norm(r["query"]) for path in GENERATED.glob("*.jsonl") for r in read_jsonl(path)}
-    headers = _client_headers()
+    done_calls = {r["call"] for r in read_jsonl(out)}
     todo = [c for c in plan if c["call"] not in done_calls][: args.max_calls]
     print(f"{args.model}: {len(todo)} calls to make ({len(done_calls)} already done)")
+    print(dict(generate_cells(args.model, todo, out, guide_rows, _client_headers())))
 
+
+def generate_cells(model, cells, out, guide_rows, headers, log=print, on_call=None):
+    """Make one API call per cell, append proposals to `out`. Resumable at call granularity."""
+    seen = {_norm(r["query"]) for path in GENERATED.glob("*.jsonl") for r in read_jsonl(path)}
     stats = Counter()
-    for n, cell in enumerate(todo, 1):
+    for n, cell in enumerate(cells, 1):
         t0 = time.perf_counter()
         try:
-            text, usage = call_groq(args.model, build_messages(cell, guide_rows), headers)
-            items = json.loads(text).get("items", [])
+            text, usage = call_groq(model, build_messages(cell, guide_rows), headers)
+            items = parse_items(text, "items")
         except (json.JSONDecodeError, AttributeError, RuntimeError, httpx.HTTPError) as exc:
-            print(f"  call {cell['call']}: failed ({exc}); will retry on next run")
+            log(f"  call {cell['call']}: failed ({exc}); will retry on next run")
             stats["failed_calls"] += 1
             continue
         kept = 0
@@ -226,8 +241,8 @@ def main():
             seen.add(_norm(q))
             ok, errors = schema.validate(it.get("label"))
             append_jsonl(out, {
-                "id": f"gen-{args.model.split('/')[-1]}-{cell['call']:03d}-{k:02d}",
-                "call": cell["call"], "model": args.model, "prompt_version": PROMPT_VERSION,
+                "id": f"gen-{model.split('/')[-1]}-{cell['call']:03d}-{k:02d}",
+                "call": cell["call"], "model": model, "prompt_version": PROMPT_VERSION,
                 "cell": {k2: cell[k2] for k2 in ("slice", "intent", "mode", "persona", "region", "register")
                          if k2 in cell} | ({"text_intent": cell["text_intent"]} if "text_intent" in cell else {}),
                 "query": q, "hints": HINT_CONFIGS[cell["mode"]],
@@ -239,11 +254,13 @@ def main():
             stats["valid" if ok else "invalid_label"] += 1
         if kept == 0:
             # Keep a marker so a call that returned nothing usable is not retried forever.
-            append_jsonl(out, {"call": cell["call"], "model": args.model, "empty": True, "query": ""})
-        print(f"  [{n}/{len(todo)}] call {cell['call']} {cell['slice']}/{cell['intent']}/{cell['mode']}: "
-              f"{kept} kept, {usage.get('total_tokens', '?')} tok, {time.perf_counter() - t0:.1f}s")
-        time.sleep(max(0.0, 25 - (time.perf_counter() - t0)))  # ~2-3 calls/min stays under 8k TPM
-    print(dict(stats))
+            append_jsonl(out, {"call": cell["call"], "model": model, "empty": True, "query": ""})
+        log(f"  [{n}/{len(cells)}] call {cell['call']} {cell['slice']}/{cell['intent']}/{cell['mode']}: "
+            f"{kept} kept, {usage.get('total_tokens', '?')} tok, {time.perf_counter() - t0:.1f}s")
+        if on_call:
+            on_call()
+        time.sleep(max(0.0, PACE_S - (time.perf_counter() - t0)))  # ~2-3 calls/min stays under 8k TPM
+    return stats
 
 
 if __name__ == "__main__":

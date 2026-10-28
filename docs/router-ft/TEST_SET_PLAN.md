@@ -1,5 +1,11 @@
 # Test set plan
 
+> **Superseded on 2026-10-28.** The project owner chose a fully automatic pipeline
+> (`ml/router_ft/auto_dataset.py`) instead of hand-writing the test set. This plan is kept
+> because its targets still shape the automatic test generator (`TEST_SLICE_TARGETS`,
+> `TEST_INTENT_WEIGHTS`), and because the manual tools (`test_writer.py`, `review.py`) still work
+> if a hand-written set is ever added. See LOG.md.
+
 The test set is the measurement. Everything else in this project can be redone; this cannot.
 
 ## Rules

@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Router Dataset Studio</title>
+<title>Router Dataset Builder</title>
 <style>
 :root {
   --bg: #f6f7f9; --panel: #ffffff; --panel-2: #f1f3f6; --text: #1b1f24; --muted: #5d6673; --faint: #8a93a0;
   --line: #e2e6ec; --grid: #eef1f4; --accent: #2f6fde; --accent-soft: #e7efff; --good: #1f8a4c; --good-soft: #e3f4ea;
   --warn: #a96500; --warn-soft: #fdf1dc; --bad: #c43d3d; --bad-soft: #fbe6e6;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
-  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08); --radius: 12px;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -23,46 +23,49 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text);
   font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-button, input, textarea, select { font: inherit; color: inherit; }
-main { padding: 28px 32px 80px; max-width: 1080px; margin: 0 auto; }
+main { padding: 28px 32px 60px; max-width: 1040px; margin: 0 auto; }
 h1 { font-size: 21px; margin: 0; font-weight: 650; }
 h2 { font-size: 15px; margin: 0 0 12px; font-weight: 620; }
-.sub { color: var(--muted); margin: 4px 0 20px; }
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.sub { color: var(--muted); margin: 4px 0 0; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; box-shadow: var(--shadow); margin-bottom: 16px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.btn { border: 1px solid var(--line); background: var(--panel); padding: 7px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight: 550; }
-.btn:hover { background: var(--panel-2); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { filter: brightness(1.07); }
-.btn.good { background: var(--good); border-color: var(--good); color: #fff; }
-.btn.bad { color: var(--bad); }
-.btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
-.btn .k { font-size: 11px; opacity: .75; margin-left: 6px; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; }
+.hero { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.hero .grow { flex: 1; min-width: 240px; }
+.big { border: 0; border-radius: 10px; padding: 14px 34px; font: 600 17px/1 inherit; font-family: inherit; cursor: pointer; color: #fff; background: var(--accent); }
+.big:hover { filter: brightness(1.07); }
+.big.stop { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+.big:disabled { opacity: .5; cursor: default; filter: none; }
+.statepill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 99px; margin-left: 8px; vertical-align: 3px; }
+.st-idle, .st-stopped { background: var(--panel-2); color: var(--muted); }
+.st-running { background: var(--accent-soft); color: var(--accent); }
+.st-done { background: var(--good-soft); color: var(--good); }
+.st-failed { background: var(--bad-soft); color: var(--bad); }
+.nums { display: flex; gap: 28px; flex-wrap: wrap; }
+.nums div { min-width: 110px; }
+.nums .k { color: var(--muted); font-size: 12px; }
+.nums .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .bar { height: 8px; background: var(--panel-2); border-radius: 99px; overflow: hidden; }
-.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s; }
 .bar.ok > i { background: var(--good); }
-
-/* dashboard */
-.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
-.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
-.tile .k { color: var(--muted); font-size: 12px; }
-.tile .v { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.2; margin-top: 2px; }
-.tile .d { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
-.card.next { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.card.done { opacity: .78; }
-.card-head { display: flex; align-items: center; gap: 10px; }
-.num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 650; background: var(--panel-2); color: var(--muted); flex: none; }
-.card.next .num { background: var(--accent); color: #fff; }
-.card.done .num { background: var(--good); color: #fff; }
-.card-title { font-weight: 620; flex: 1; }
-.who { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 0 7px; white-space: nowrap; }
-.card-stats { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; gap: 8px; flex-wrap: wrap; }
-.card-stats b { color: var(--text); font-weight: 600; }
-.card-foot { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
-.card-note { font-size: 12.5px; color: var(--muted); }
-.log { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; font: 11.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; max-height: 120px; overflow: auto; color: var(--muted); }
+.bar.fail > i { background: var(--bad); }
+.bar.run > i { background: var(--accent); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+.stages { display: grid; gap: 4px; }
+.stage { display: grid; grid-template-columns: 28px 1fr 240px 150px; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.stage:last-child { border-bottom: 0; }
+.dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 650; background: var(--panel-2); color: var(--muted); }
+.dot.done { background: var(--good); color: #fff; }
+.dot.running { background: var(--accent); color: #fff; }
+.dot.failed { background: var(--bad); color: #fff; }
+.stage .t { font-weight: 600; }
+.stage .by { color: var(--muted); font-size: 12px; }
+.stage .cnt { font-size: 12px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.stage .time { text-align: right; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage .time b { color: var(--text); font-weight: 600; }
+.banner { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+.banner.bad { background: var(--bad-soft); color: var(--bad); }
+.banner.good { background: var(--good-soft); color: var(--good); }
+.banner.info { background: var(--accent-soft); color: var(--accent); }
 .chart-wrap { position: relative; }
 .chart-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
 .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
@@ -73,233 +76,103 @@ h2 { font-size: 15px; margin: 0 0 12px; font-weight: 620; }
 .tip .t { color: var(--muted); margin-bottom: 4px; }
 .tip .r { display: flex; align-items: center; gap: 6px; }
 .tip .r i { width: 10px; height: 3px; border-radius: 2px; }
-.empty { color: var(--muted); font-size: 13px; padding: 30px 0; text-align: center; }
-.banner { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
-.banner.warn { background: var(--warn-soft); color: var(--warn); }
-.banner.good { background: var(--good-soft); color: var(--good); }
-.banner.bad { background: var(--bad-soft); color: var(--bad); }
-.banner.info { background: var(--accent-soft); color: var(--accent); }
-
-/* work screens */
-.workbar { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
-.back { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 4px 0; font-weight: 550; }
-.workbar .title { font-size: 19px; font-weight: 650; flex: 1; }
-.workbar .stats { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
-.workbar .stats b { color: var(--text); }
-.workprogress { margin: -6px 0 18px; }
-textarea, input[type=text], select { width: 100%; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 9px 11px; outline: none; }
-textarea:focus, input[type=text]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-textarea.query { font-size: 16px; min-height: 76px; resize: vertical; }
-.field { margin-bottom: 14px; }
-.field > .lbl { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { border: 1px solid var(--line); background: var(--panel); border-radius: 99px; padding: 4px 12px; cursor: pointer; font-size: 13px; }
-.chip:hover { background: var(--panel-2); }
-.chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-.chip:disabled { opacity: .35; cursor: not-allowed; }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
-.seg button { border: 0; background: var(--panel); padding: 6px 12px; cursor: pointer; border-right: 1px solid var(--line); }
-.seg button:last-child { border-right: 0; }
-.seg button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.seg small { color: var(--muted); margin-left: 4px; }
-.intents { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.intent { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; background: var(--panel); text-align: left; }
-.intent:hover { background: var(--panel-2); }
-.intent.on { border-color: var(--accent); background: var(--accent-soft); }
-.intent b { display: block; font-size: 13px; }
-.intent small { color: var(--muted); font-size: 11.5px; line-height: 1.35; display: block; }
-.intent .key { float: right; font-size: 11px; color: var(--muted); }
-.toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
-.toggle .sw { width: 34px; height: 20px; border-radius: 99px; background: var(--line); position: relative; transition: .15s; }
-.toggle .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: .15s; }
-.toggle.on .sw { background: var(--accent); }
-.toggle.on .sw::after { left: 16px; }
-.quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.quick button { font-size: 12px; border: 1px dashed var(--line); background: none; border-radius: 6px; padding: 2px 8px; cursor: pointer; color: var(--muted); }
-.quick button:hover { color: var(--accent); border-color: var(--accent); }
-.errors { font-size: 12.5px; color: var(--bad); min-height: 18px; }
-.ok-msg { color: var(--good); }
-.query-card { font-size: 18px; line-height: 1.45; padding: 16px 18px; background: var(--panel-2); border-radius: 8px; margin-bottom: 12px; }
-.meta { margin-bottom: 12px; }
-.pill { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 99px; background: var(--panel-2); color: var(--muted); margin: 0 4px 4px 0; }
-.pill.warn { background: var(--warn-soft); color: var(--warn); }
-.pill.good { background: var(--good-soft); color: var(--good); }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.spacer { flex: 1; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { font-size: 12px; color: var(--muted); font-weight: 600; }
-.rowbtn { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0 4px; font-size: 12.5px; }
-.rowbtn.bad { color: var(--bad); }
-details.rules { margin-top: 6px; }
-details.rules summary { cursor: pointer; color: var(--muted); font-size: 13px; }
-details.rules p { margin: 8px 0; font-size: 13px; }
-details.rules code { background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
-.kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--muted); }
-.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 9px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: .2s; pointer-events: none; z-index: 9; max-width: 80vw; }
-.toast.show { opacity: .95; }
-.toast.err { background: var(--bad); color: #fff; }
-.hidden { display: none !important; }
+.empty { color: var(--muted); font-size: 13px; padding: 34px 0; text-align: center; }
+.log { font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+.results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.results .k { color: var(--muted); font-size: 12px; }
+.results .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.results .d { color: var(--muted); font-size: 12px; }
+.note { color: var(--muted); font-size: 12.5px; margin-top: 12px; }
 @media (max-width: 760px) {
-  main { padding: 18px 16px 60px; }
-  .grid2, .cards, .tiles, .intents { grid-template-columns: 1fr; }
+  main { padding: 18px 16px 50px; }
+  .grid2, .results { grid-template-columns: 1fr; }
+  .stage { grid-template-columns: 28px 1fr; } .stage > :nth-child(n+3) { grid-column: 2; text-align: left; }
 }
 </style>
 </head>
 <body>
 <main>
-  <!-- DASHBOARD -->
-  <section id="v-home">
-    <div class="top">
-      <div><h1>Router Dataset Studio</h1><div class="sub" style="margin-bottom:0">Phase 2: build the dataset. Start the highlighted step.</div></div>
+  <div class="panel hero">
+    <div class="grow">
+      <h1>Router Dataset Builder <span class="statepill" id="state"></span></h1>
+      <p class="sub">Builds the test set, the training data and the splits automatically. Press Start and watch; Start again resumes after a stop or error.</p>
     </div>
-    <div id="tamper"></div>
-    <div class="tiles">
-      <div class="panel tile"><div class="k">Steps done</div><div class="v" id="t-steps">–</div><div class="d" id="t-steps-d"></div></div>
-      <div class="panel tile"><div class="k">Your time so far</div><div class="v" id="t-spent">–</div><div class="d">active time only; breaks over 5 min don't count</div></div>
-      <div class="panel tile"><div class="k">Your time left (estimate)</div><div class="v" id="t-left">–</div><div class="d" id="t-left-d"></div></div>
-    </div>
-    <div class="cards" id="cards"></div>
-    <div class="grid2">
-      <div class="panel"><h2>Progress over time</h2><div class="legend" id="lc-legend"></div><div class="chart-wrap" id="lc"></div></div>
-      <div class="panel"><h2>Time spent per step</h2><div class="chart-wrap" id="bc"></div></div>
-    </div>
-  </section>
-
-  <!-- WORK SCREENS -->
-  <section id="v-work" class="hidden">
-    <div class="workbar"><button class="back" id="back">← Dashboard</button><div class="title" id="w-title"></div><div class="stats" id="w-stats"></div></div>
-    <div class="workprogress"><div class="bar" id="w-bar"><i></i></div></div>
-    <div id="w-body"></div>
-  </section>
+    <div class="nums"><div><div class="k">Elapsed</div><div class="v" id="elapsed">–</div></div><div><div class="k">Time left (est.)</div><div class="v" id="eta">–</div></div></div>
+    <button class="big" id="go">Start</button>
+  </div>
+  <div id="banner"></div>
+  <div class="panel"><div class="stages" id="stages"></div></div>
+  <div class="grid2">
+    <div class="panel"><h2>Progress over time</h2><div class="legend" id="lc-legend"></div><div class="chart-wrap" id="lc"></div></div>
+    <div class="panel"><h2>Time per stage</h2><div class="chart-wrap" id="bc"></div></div>
+  </div>
+  <div class="panel" id="results-panel"><h2>Results</h2><div class="results" id="results"></div>
+    <div class="note">Test labels are "silver": two different models labelled each test query blind, and only identical labels were kept. No person checked them. The reference baseline (gpt-oss-120b) never labelled the test set.</div></div>
+  <div class="panel"><h2>Latest activity</h2><div class="log" id="log"></div></div>
 </main>
-<div class="toast" id="toast"></div>
-
 <script>
-const $ = (s, el = document) => el.querySelector(s);
+const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let S = null, view = "home";
-const INTENT_HELP = {bitemporal_change: "same place, two times", crossmodal_fusion: "see through cloud / fuse SAR", sar_vqa: "question about radar data",
-  visual_grounding: "locate / mark / outline", scene_captioning: "describe the whole scene", optical_vqa: "specific question, one image (default)"};
-const MODE_HELP = {cross_modal: "default", bitemporal: "change mode", single_image: "optical only", both: "both pairs"};
-const SLICE_HELP = {clean: "plain, obvious keywords", paraphrase: "intent without its keyword", negation: "negated weather / excluded objects",
-  typo_hinglish: "typos, shorthand, Hinglish", compound: "two or more outputs", hint_driven: "bitemporal mode changes the answer", keyword_trap: "keyword in the wrong sense"};
-// Human steps that get a line on the progress chart, in fixed colour order.
-const SERIES = [{key: "write", name: "Write", c: "--s1"}, {key: "label", name: "Label", c: "--s2"}, {key: "review", name: "Review", c: "--s3"}, {key: "relabel", name: "Re-label", c: "--s4"}];
-
-function toast(msg, err = false) { const t = $("#toast"); t.textContent = msg; t.className = "toast show" + (err ? " err" : ""); clearTimeout(t._h); t._h = setTimeout(() => t.className = "toast", err ? 4200 : 1600); }
-async function api(path, body) {
-  const r = await fetch(path, body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
-  const d = await r.json(); if (!r.ok) throw new Error(d.error || r.statusText); return d;
-}
-let lastHomeKey = "";
-async function refresh() {
-  S = await api("/api/state");
-  if (view !== "home") return renderWorkHeader();
-  // Re-render only when something changed, so a background refresh never swallows a click.
-  const key = JSON.stringify({...S, now: null});
-  if (key !== lastHomeKey) { lastHomeKey = key; renderHome(); }
-}
-function dur(s) {
-  if (s == null) return "–"; s = Math.round(s);
-  if (s < 60) return s + "s"; const m = Math.round(s / 60); if (m < 60) return m + " min";
-  const h = Math.floor(m / 60), mm = m % 60; return h + " h" + (mm ? " " + mm + " min" : "");
-}
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const step = k => S.steps.find(s => s.key === k);
-
-// ================================================================ dashboard
-const STEP_INFO = {
-  write: {note: "Write how a real analyst types. No LLM help.", action: "Start writing", view: "write"},
-  label: {note: "Separate sitting from writing. ~50 s per row.", action: "Start labelling", view: "label"},
-  freeze: {note: "Permanent. Unlocks the generator.", action: "Freeze", view: "freeze"},
-  generate: {note: "Runs both Groq models in parallel. ~25 min.", action: "Run generator", job: "generate"},
-  review: {note: "Keys A / R / S. A few seconds per item.", action: "Start reviewing", view: "review"},
-  splits: {note: "Removes near-copies of test/probe queries.", action: "Build splits", job: "splits"},
-  relabel: {note: "Blind, ~40 min. Opens 3 days after freezing.", action: "Start re-label", view: "relabel"},
-  agreement: {note: "Cohen's kappa for intent.", action: "Compute", job: "agreement"},
-};
-function lockReason(s) {
-  if (s.key === "label" && !S.test_rows.length) return "Write some queries first";
-  if (s.key === "freeze" && !(S.test_stats.rows && S.test_stats.labelled === S.test_stats.rows)) return "Label every row first";
-  if (["generate", "splits", "agreement"].includes(s.key) && !S.frozen) return "Needs a frozen test set";
-  if (s.key === "review" && !S.review.candidates) return "Run the generator first";
-  if (s.key === "relabel" && !S.relabel.available) return S.frozen ? "Opens " + new Date(S.relabel.opens_at).toLocaleString([], {dateStyle: "medium", timeStyle: "short"}) : "Opens 3 days after freezing";
-  if (s.key === "agreement" && !(S.relabel.done >= S.relabel.total && S.relabel.total)) return "Finish the re-label first";
-  if ((s.key === "write" || s.key === "label") && S.frozen) return null;
-  return null;
+const SERIES = {test_generate: "--s1", test_label: "--s2", train_generate: "--s3", train_check: "--s4"};
+const SHORT = {test_generate: "Test queries", test_label: "Test labels", test_freeze: "Freeze", train_generate: "Train candidates", train_check: "Train checks", splits: "Splits"};
+let S = null;
+function dur(s) {
+  if (s == null) return "–"; s = Math.round(s); if (s < 60) return s + "s";
+  const m = Math.round(s / 60); if (m < 60) return m + " min"; const h = Math.floor(m / 60), mm = m % 60; return h + " h" + (mm ? " " + mm + " min" : "");
 }
-function jobFor(key) { return Object.entries(S.jobs).filter(([k]) => k === key || k.startsWith(key + ":")).map(([, j]) => j); }
+async function api(path, method = "GET") { const r = await fetch(path, {method}); const d = await r.json(); if (!r.ok) throw new Error(d.error || r.statusText); return d; }
+async function refresh() { try { S = await api("/api/state"); render(); } catch (e) { $("#banner").innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; } }
 
-function renderHome() {
-  $("#tamper").innerHTML = S.tampered ? `<div class="banner bad">test.jsonl no longer matches the hash recorded at freeze time. Restore it from git before going on.</div>` : "";
-  const nextIdx = S.steps.findIndex(s => !s.done);
-  const human = S.steps.filter(s => s.who === "you");
-  const spent = human.reduce((a, s) => a + (s.timing?.active_s || 0), 0);
-  const left = human.filter(s => !s.done).map(s => s.timing?.eta_s);
-  $("#t-steps").textContent = `${S.steps.filter(s => s.done).length} / ${S.steps.length}`;
-  $("#t-steps-d").textContent = nextIdx < 0 ? "all done" : "next: " + S.steps[nextIdx].title;
-  $("#t-spent").textContent = spent ? dur(spent) : "0 min";
-  const known = left.filter(x => x != null);
-  $("#t-left").textContent = known.length ? "≈ " + dur(known.reduce((a, b) => a + b, 0)) : "–";
-  $("#t-left-d").textContent = left.length && known.length < left.length ? "from your pace so far; steps not started yet aren't counted" : known.length ? "from your median pace per item" : "appears once you've done a few items";
+function render() {
+  const st = S.state, labels = {idle: "not started", running: "running", stopped: "stopped", failed: "stopped with an error", done: "done"};
+  $("#state").className = "statepill st-" + st; $("#state").textContent = labels[st] || st;
+  const go = $("#go");
+  if (st === "running") { go.disabled = false; go.textContent = "Stop"; go.className = "big stop"; go.onclick = () => api("/api/stop", "POST").then(refresh); }
+  else if (st === "done") { go.textContent = "Done"; go.className = "big"; go.disabled = true; }
+  else { go.disabled = false; go.className = "big"; go.textContent = st === "idle" ? "Start" : "Resume"; go.onclick = () => api("/api/start", "POST").then(() => setTimeout(refresh, 800)); }
+  const elapsed = S.stages.reduce((a, s) => a + (s.elapsed_s || 0), 0);
+  const left = S.stages.filter(s => s.status !== "done").reduce((a, s) => a + (s.eta_s || 0), 0);
+  $("#elapsed").textContent = elapsed ? dur(elapsed) : "–";
+  $("#eta").textContent = st === "done" ? "0" : "≈ " + dur(left);
+  $("#banner").innerHTML = st === "failed" ? `<div class="banner bad"><b>Stopped:</b> ${esc(S.error)}. Fix the cause if it names one, then press Resume; finished work is kept.</div>`
+    : st === "done" ? `<div class="banner good">Finished. The test set is frozen and train/val splits are built. Next is Phase 3 (baselines).</div>`
+    : st === "idle" ? `<div class="banner info">About ${dur(left)} on the Groq free tier. You can close this tab; the run keeps going, and Start resumes it if it stops.</div>` : "";
 
-  $("#cards").innerHTML = S.steps.map((s, i) => {
-    const info = STEP_INFO[s.key], lock = s.done ? null : lockReason(s), jobs = jobFor(s.key), running = jobs.some(j => j.running);
-    const t = s.timing, pct = s.target ? Math.min(100, 100 * s.n / s.target) : (s.done ? 100 : 0);
-    const stats = [];
-    if (s.target) stats.push(`<span><b>${s.n}</b> / ${s.target}</span>`);
-    if (s.who === "you" && t?.active_s) stats.push(`<span>spent <b>${dur(t.active_s)}</b></span>`);
-    if (s.who === "you" && t?.pace_s) stats.push(`<span><b>${dur(t.pace_s)}</b> / item</span>`);
-    if (!s.done && t?.eta_s) stats.push(`<span>≈ <b>${dur(t.eta_s)}</b> left</span>`);
-    jobs.forEach(j => stats.push(`<span>${j.running ? "running" : "took"} <b>${dur(j.elapsed_s)}</b></span>`));
-    let btn;
-    if (s.done && !info.view) btn = info.job ? `<button class="btn" data-job="${info.job}">Run again</button>` : "";
-    else if (s.done) btn = info.view && ["review", "relabel"].includes(info.view) ? "" : `<button class="btn" data-view="${info.view}">Open</button>`;
-    else if (lock) btn = `<button class="btn" disabled>${esc(lock)}</button>`;
-    else if (running) btn = `<button class="btn" disabled>Running…</button>`;
-    else btn = info.job ? `<button class="btn ${i === nextIdx ? "primary" : ""}" data-job="${info.job}">${info.action}</button>`
-      : `<button class="btn ${i === nextIdx ? "primary" : ""}" data-view="${info.view}">${s.n ? "Continue" : info.action}</button>`;
-    if (s.done && info.job === undefined && ["write", "label"].includes(s.key) && S.frozen) btn = "";
-    const tail = jobs.flatMap(j => j.log_tail.slice(-3)).filter(Boolean);
-    return `<div class="card ${s.done ? "done" : i === nextIdx ? "next" : ""}">
-      <div class="card-head"><span class="num">${s.done ? "✓" : i + 1}</span><span class="card-title">${esc(s.title)}</span><span class="who">${s.who === "you" ? "you" : "automatic"}</span></div>
-      <div class="bar ${s.done ? "ok" : ""}"><i style="width:${pct}%"></i></div>
-      <div class="card-stats">${stats.join("") || `<span>${s.done ? "done" : "not started"}</span>`}</div>
-      ${running && tail.length ? `<div class="log">${esc(tail.join("\n"))}</div>` : ""}
-      <div class="card-foot"><span class="card-note">${s.done ? "" : esc(info.note)}</span>${btn}</div></div>`;
+  // Train generation and checking overlap, which is why "train_check" can finish just after "train_generate".
+  $("#stages").innerHTML = S.stages.map((s, i) => {
+    const pct = s.target ? Math.min(100, 100 * s.done / s.target) : s.status === "done" ? 100 : 0;
+    const cls = s.status === "done" ? "ok" : s.status === "failed" ? "fail" : s.status === "running" ? "run" : "";
+    const time = s.status === "done" ? `took <b>${dur(s.elapsed_s)}</b>` : s.status === "running" ? `<b>${dur(s.elapsed_s)}</b> so far<br>≈ ${dur(s.eta_s)} left`
+      : s.status === "failed" ? `stopped after ${dur(s.elapsed_s)}` : `≈ ${dur(s.expected_s)}`;
+    return `<div class="stage"><span class="dot ${s.status}">${s.status === "done" ? "✓" : s.status === "failed" ? "!" : i + 1}</span>
+      <div><div class="t">${esc(s.title)}</div><div class="by">${esc(s.by)}</div></div>
+      <div><div class="bar ${cls}"><i style="width:${pct}%"></i></div><div class="cnt">${s.target ? `${s.done} / ${s.target}` : s.status === "done" ? "done" : "waiting"}</div></div>
+      <div class="time">${time}</div></div>`;
   }).join("");
-  document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => openView(b.dataset.view));
-  document.querySelectorAll("[data-job]").forEach(b => b.onclick = () => runJob(b.dataset.job));
-  renderLineChart(); renderBarChart();
-}
-async function runJob(job) {
-  if (job === "generate" && !confirm("Start generating training candidates on Groq (free tier, ~25 min)?")) return;
-  try { const d = await api("/api/jobs/run", {job}); toast(d.started.length ? "Started" : "Already running"); refresh(); } catch (e) { toast(e.message, true); }
+  renderLine(); renderBars(); renderResults();
+  $("#log").textContent = (S.log || []).join("\n") || "Nothing yet.";
 }
 
-// ---------- line chart: cumulative % of target per human step
-function renderLineChart() {
-  const host = $("#lc"), series = SERIES.map(s => {
-    const st = step(s.key), pts = (st?.timing?.series || []).map((t, i) => ({t: +new Date(t), y: Math.min(100, 100 * (i + 1) / (st.target || 1)), n: i + 1}));
-    return {...s, pts, target: st?.target, color: cssVar(s.c)};
-  }).filter(s => s.pts.length);
+function renderLine() {
+  const host = $("#lc");
+  const series = S.stages.filter(s => SERIES[s.key] && s.samples.length && s.target).map(s => ({
+    key: s.key, name: SHORT[s.key], color: cssVar(SERIES[s.key]), target: s.target,
+    pts: s.samples.map(([t, n]) => ({t: +new Date(t), n, y: Math.min(100, 100 * n / s.target)}))}));
   $("#lc-legend").innerHTML = series.length > 1 ? series.map(s => `<span><i style="background:${s.color}"></i>${s.name}</span>`).join("") : "";
-  if (!series.length) { host.innerHTML = `<div class="empty">Fills in as you write your first queries.</div>`; return; }
-  const W = 480, H = 220, m = {l: 38, r: 64, t: 10, b: 26};
-  const t0 = Math.min(...series.map(s => s.pts[0].t)), t1 = Math.max(Date.now(), ...series.map(s => s.pts.at(-1).t));
+  if (!series.length) { host.innerHTML = `<div class="empty">Fills in once the run starts.</div>`; return; }
+  const W = 480, H = 220, m = {l: 38, r: 96, t: 10, b: 26}, now = +new Date(S.now);
+  const t0 = Math.min(...series.map(s => s.pts[0].t)), t1 = S.state === "running" ? now : Math.max(...series.map(s => s.pts.at(-1).t));
   const span = Math.max(t1 - t0, 60e3);
   const x = t => m.l + (W - m.l - m.r) * (t - t0) / span, y = v => m.t + (H - m.t - m.b) * (1 - v / 100);
-  const fmt = t => span > 36e5 * 20 ? new Date(t).toLocaleDateString([], {month: "short", day: "numeric"}) : new Date(t).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+  const fmt = t => new Date(t).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
   const grid = [0, 25, 50, 75, 100].map(v => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10.5" fill="var(--faint)">${v}%</text>`).join("");
   const xt = [0, .5, 1].map(f => `<text x="${x(t0 + f * span)}" y="${H - 6}" text-anchor="${f === 0 ? "start" : f === 1 ? "end" : "middle"}" font-size="10.5" fill="var(--faint)">${fmt(t0 + f * span)}</text>`).join("");
-  // Step lines: progress stays flat between items, then jumps.
-  const path = s => { let d = `M${x(s.pts[0].t)},${y(0)}`; s.pts.forEach(p => d += ` H${x(p.t)} V${y(p.y)}`); return d + ` H${x(Math.max(s.pts.at(-1).t, Date.now()))}`; };
-  // Direct labels at the right edge, nudged apart so they never overlap.
+  const path = s => s.pts.map((p, i) => `${i ? "L" : "M"}${x(p.t)},${y(p.y)}`).join(" ");
   const ends = series.map(s => ({s, yy: y(s.pts.at(-1).y)})).sort((a, b) => a.yy - b.yy);
   for (let i = 1; i < ends.length; i++) if (ends[i].yy - ends[i - 1].yy < 13) ends[i].yy = ends[i - 1].yy + 13;
-  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative progress per step, percent of target">
-    ${grid}<line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>${xt}
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Progress of each stage over time, percent of its target">${grid}
+    <line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>${xt}
     ${series.map(s => `<path d="${path(s)}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`).join("")}
     ${ends.map(e => `<text x="${W - m.r + 6}" y="${e.yy + 4}" font-size="11" fill="var(--muted)">${e.s.name} ${Math.round(e.s.pts.at(-1).y)}%</text>`).join("")}
     <line id="lc-x" y1="${m.t}" y2="${H - m.b}" stroke="var(--faint)" stroke-dasharray="3 3" opacity="0"/>
@@ -308,268 +181,54 @@ function renderLineChart() {
   $("#lc-hit").onmousemove = ev => {
     const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width, t = t0 + (px - m.l) / (W - m.l - m.r) * span;
     cross.setAttribute("x1", px); cross.setAttribute("x2", px); cross.setAttribute("opacity", 1);
-    const rows = series.map(s => { const p = s.pts.filter(p => p.t <= t).at(-1); return `<div class="r"><i style="background:${s.color}"></i>${s.name}: ${p ? p.n : 0} / ${s.target}</div>`; }).join("");
-    tip.innerHTML = `<div class="t">${new Date(t).toLocaleString([], {dateStyle: "medium", timeStyle: "short"})}</div>${rows}`;
-    tip.classList.add("show"); const tx = ev.clientX - r.left; tip.style.left = Math.min(tx + 12, r.width - tip.offsetWidth) + "px"; tip.style.top = "8px";
+    tip.innerHTML = `<div class="t">${new Date(t).toLocaleTimeString()}</div>` + series.map(s => {
+      const p = s.pts.filter(p => p.t <= t).at(-1); return `<div class="r"><i style="background:${s.color}"></i>${s.name}: ${p ? p.n : 0} / ${s.target}</div>`; }).join("");
+    tip.classList.add("show"); tip.style.left = Math.min(ev.clientX - r.left + 12, r.width - tip.offsetWidth) + "px"; tip.style.top = "8px";
   };
   $("#lc-hit").onmouseleave = () => { tip.classList.remove("show"); cross.setAttribute("opacity", 0); };
 }
 
-// ---------- bar chart: active time per human step (+ remaining estimate as a hover detail)
-function renderBarChart() {
-  const host = $("#bc"), rows = SERIES.map(s => ({...s, st: step(s.key)})).map(r => ({...r, t: r.st?.timing || {}}));
-  if (!rows.some(r => r.t.active_s)) { host.innerHTML = `<div class="empty">Shows how long each of your steps took, once you start.</div>`; return; }
-  const W = 480, rowH = 40, m = {l: 70, r: 90, t: 4}, H = m.t + rows.length * rowH;
-  const max = Math.max(...rows.map(r => (r.t.active_s || 0) + (r.st?.done ? 0 : r.t.eta_s || 0)), 60);
+function renderBars() {
+  const host = $("#bc"), rows = S.stages, color = cssVar("--s1");
+  const W = 480, rowH = 34, m = {l: 112, r: 84, t: 2}, H = m.t + rows.length * rowH;
+  const val = s => ({a: s.elapsed_s || 0, e: s.status === "done" ? 0 : (s.eta_s || 0)});
+  const max = Math.max(60, ...rows.map(s => val(s).a + val(s).e));
   const x = v => (W - m.l - m.r) * v / max;
-  const color = cssVar("--s1");
-  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Active time spent per step">${rows.map((r, i) => {
-    const y0 = m.t + i * rowH + 8, h = 18, a = r.t.active_s || 0, e = r.st?.done ? 0 : (r.t.eta_s || 0);
-    const label = a ? dur(a) + (e ? ` · ≈${dur(e)} left` : "") : "–";
-    return `<g class="bc-row" data-i="${i}"><text x="${m.l - 8}" y="${y0 + 13}" text-anchor="end" font-size="12" fill="var(--muted)">${r.name}</text>
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Time spent and estimated time left per stage">${rows.map((s, i) => {
+    const {a, e} = val(s), y0 = m.t + i * rowH + 7, h = 16;
+    return `<g class="bc-row" data-i="${i}"><text x="${m.l - 8}" y="${y0 + 12}" text-anchor="end" font-size="12" fill="var(--muted)">${SHORT[s.key]}</text>
       <rect x="${m.l}" y="${y0}" width="${W - m.l - m.r}" height="${h}" rx="4" fill="var(--panel-2)"/>
-      ${e ? `<rect x="${m.l + x(a) + (a ? 2 : 0)}" y="${y0}" width="${Math.max(0, x(e) - 2)}" height="${h}" rx="4" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 3" opacity=".7"/>` : ""}
+      ${e ? `<rect x="${m.l + x(a) + (a ? 2 : 0)}" y="${y0 + .75}" width="${Math.max(0, x(e) - 2)}" height="${h - 1.5}" rx="4" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 3" opacity=".75"/>` : ""}
       ${a ? `<rect x="${m.l}" y="${y0}" width="${Math.max(4, x(a))}" height="${h}" rx="4" fill="${color}"/>` : ""}
-      <text x="${W - m.r + 8}" y="${y0 + 13}" font-size="11.5" fill="var(--text)">${esc(label.split(" · ")[0])}</text>
-      <rect x="0" y="${y0 - 8}" width="${W}" height="${rowH}" fill="transparent"/></g>`;
-  }).join("")}</svg><div class="legend" style="margin:8px 0 0"><span><i style="background:${color};height:8px;width:12px"></i>time spent</span><span><i style="border:1.5px dashed ${color};height:8px;width:12px;background:none"></i>estimated time left</span></div><div class="tip" id="bc-tip"></div>`;
+      <text x="${W - m.r + 8}" y="${y0 + 12}" font-size="11.5" fill="var(--text)">${a ? dur(a) : e ? "≈ " + dur(e) : "–"}</text>
+      <rect x="0" y="${y0 - 7}" width="${W}" height="${rowH}" fill="transparent"/></g>`;
+  }).join("")}</svg><div class="legend" style="margin:8px 0 0"><span><i style="background:${color};height:8px;width:12px"></i>time taken</span><span><i style="border:1.5px dashed ${color};height:8px;width:12px;background:none"></i>estimated time left</span></div><div class="tip" id="bc-tip"></div>`;
   const svg = host.querySelector("svg"), tip = $("#bc-tip");
   host.querySelectorAll(".bc-row").forEach(g => {
     g.onmousemove = ev => {
-      const r = rows[+g.dataset.i], b = svg.getBoundingClientRect();
-      tip.innerHTML = `<div class="t">${r.name}</div><div>spent: ${dur(r.t.active_s)}</div><div>pace: ${r.t.pace_s ? dur(r.t.pace_s) + " per item" : "–"}</div><div>left: ${r.st?.done ? "done" : r.t.eta_s ? "≈ " + dur(r.t.eta_s) : "–"}</div>`;
+      const s = rows[+g.dataset.i], b = svg.getBoundingClientRect();
+      tip.innerHTML = `<div class="t">${esc(s.title)}</div><div>status: ${s.status}</div><div>time taken: ${dur(s.elapsed_s)}</div><div>left: ${s.status === "done" ? "–" : "≈ " + dur(s.eta_s)}</div>`;
       tip.classList.add("show"); tip.style.left = Math.min(ev.clientX - b.left + 12, b.width - tip.offsetWidth) + "px"; tip.style.top = (ev.clientY - b.top + 12) + "px";
     };
     g.onmouseleave = () => tip.classList.remove("show");
   });
 }
 
-// ================================================================ work screens
-const VIEW_STEP = {write: "write", label: "label", freeze: "freeze", review: "review", relabel: "relabel"};
-const VIEW_TITLE = {write: "Write test queries", label: "Label the test set", freeze: "Freeze the test set", review: "Review generated candidates", relabel: "Blind re-label"};
-let sessionStart = 0, sessionStartN = 0;
-function openView(v) {
-  view = v; $("#v-home").classList.add("hidden"); $("#v-work").classList.remove("hidden"); window.scrollTo(0, 0);
-  const st = step(VIEW_STEP[v]); sessionStart = Date.now(); sessionStartN = st?.n || 0;
-  $("#w-title").textContent = VIEW_TITLE[v]; renderWorkHeader();
-  ({write: viewWrite, label: viewLabel, freeze: viewFreeze, review: viewReview, relabel: viewRelabel})[v]();
-}
-function goHome() { view = "home"; lastHomeKey = ""; $("#v-work").classList.add("hidden"); $("#v-home").classList.remove("hidden"); refresh(); }
-$("#back").onclick = goHome;
-function renderWorkHeader() {
-  const st = step(VIEW_STEP[view]); if (!st) return;
-  const pct = st.target ? Math.min(100, 100 * st.n / st.target) : 0;
-  $("#w-bar").className = "bar" + (st.done ? " ok" : ""); $("#w-bar").firstElementChild.style.width = pct + "%";
-  const t = st.timing || {}, doneNow = (st.n || 0) - sessionStartN;
-  $("#w-stats").innerHTML = (st.target ? `<b>${st.n}</b> / ${st.target}` : "") + ` · this sitting <b>${dur((Date.now() - sessionStart) / 1000)}</b>, ${doneNow} done`
-    + (t.eta_s && !st.done ? ` · ≈ <b>${dur(t.eta_s)}</b> left` : "");
-}
-setInterval(() => { if (view !== "home") renderWorkHeader(); }, 15000);
-const RULES = `<details class="rules"><summary>Rules reminder</summary>
-  <p>Primary precedence: <code>change &gt; fusion &gt; SAR &gt; grounding &gt; captioning &gt; optical</code>. Secondaries only fusion / grounding / captioning.</p>
-  <p><b>bitemporal mode</b> ⇒ always bitemporal_change. <b>has_sar_pair never changes the label.</b> Change needs two times; "new" alone isn't change.</p>
-  <p><b>cloud</b> = view blocked by cloud/haze/smoke/fog. Negated or non-weather → false. Fusion secondary is added for you when needed.</p>
-  <p>Entities = every category mentioned as a physical feature (flood = any inland water). Temporal: <code>March -&gt; Now</code>, <code>2 Years Ago -&gt; Now</code>, <code>Pre-Event -&gt; Post-Event</code>; one time point → null.</p></details>`;
-
-// ---------- write
-let wMode = "cross_modal", wSlices = new Set();
-function viewWrite() {
-  if (S.frozen) { $("#w-body").innerHTML = `<div class="banner info">The test set is frozen and can't be edited.</div>`; return; }
-  $("#w-body").innerHTML = `<div class="banner info">Write how a real analyst types: no LLM help, no regex output, no copies of the GUIDELINES or PROBES examples. Labels come in a later sitting.</div>
-    <div class="grid2" style="grid-template-columns:1.5fr 1fr">
-    <div class="panel"><div class="field"><div class="lbl"><span>Query</span><span><span class="kbd">Enter</span> saves · <span class="kbd">Shift+Enter</span> new line</span></div>
-      <textarea class="query" id="w-query" placeholder="type the query"></textarea></div>
-      <div class="field"><div class="lbl">UI mode</div><div class="seg" id="w-mode"></div></div>
-      <div class="field"><div class="lbl">Slices</div><div class="chips" id="w-slices"></div></div>
-      <div class="field"><div class="lbl">Notes (optional)</div><input type="text" id="w-notes"></div>
-      <div class="actions"><button class="btn primary" id="w-save">Save query</button><span class="errors" id="w-err"></span></div></div>
-    <div class="panel"><h2>Still needed</h2><div id="w-need"></div></div></div>
-    <div class="panel"><h2>Latest</h2><table><tbody id="w-rows"></tbody></table></div>`;
-  $("#w-save").onclick = saveWrite;
-  $("#w-query").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveWrite(); } });
-  paintWrite(); $("#w-query").focus();
-}
-function paintWrite() {
-  $("#w-mode").innerHTML = S.vocab.modes.map(m => `<button data-m="${m}" class="${m === wMode ? "on" : ""}">${m}<small>${MODE_HELP[m]}</small></button>`).join("");
-  $("#w-mode").querySelectorAll("button").forEach(b => b.onclick = () => { wMode = b.dataset.m; paintWrite(); });
-  $("#w-slices").innerHTML = S.vocab.slices.map(s => `<button class="chip ${wSlices.has(s) ? "on" : ""}" data-s="${s}" title="${esc(SLICE_HELP[s])}">${s}</button>`).join("");
-  $("#w-slices").querySelectorAll(".chip").forEach(b => b.onclick = () => { wSlices.has(b.dataset.s) ? wSlices.delete(b.dataset.s) : wSlices.add(b.dataset.s); paintWrite(); });
-  const st = S.test_stats, need = [...st.slices, ...st.modes].filter(x => x.n < x.target).sort((a, b) => a.n / a.target - b.n / b.target);
-  $("#w-need").innerHTML = (need.length ? need.map(x => `<div style="margin-bottom:8px"><div class="card-stats" style="margin-bottom:3px"><span>${esc(x.name)}</span><span>${x.n} / ${x.target}</span></div><div class="bar"><i style="width:${100 * x.n / x.target}%"></i></div></div>`).join("")
-    : `<span class="pill good">every slice and mode target met</span>`) + `<div class="card-note" style="margin-top:10px">Intent and field coverage are checked after labelling.</div>`;
-  $("#w-rows").innerHTML = S.test_rows.slice(-8).reverse().map(r => `<tr><td>${r.id}</td><td>${esc(r.query)}</td><td>${r.mode}</td><td>${r.slices.map(s => `<span class="pill">${s}</span>`).join("")}</td>
-    <td style="white-space:nowrap"><button class="rowbtn" data-edit="${r.id}">edit</button><button class="rowbtn bad" data-del="${r.id}">delete</button></td></tr>`).join("") || `<tr><td class="card-note">Nothing yet.</td></tr>`;
-  $("#w-rows").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => { if (!confirm("Delete " + b.dataset.del + "?")) return; try { await api("/api/test/delete", {id: b.dataset.del}); await refresh(); paintWrite(); } catch (e) { toast(e.message, true); } });
-  $("#w-rows").querySelectorAll("[data-edit]").forEach(b => b.onclick = async () => { const r = S.test_rows.find(x => x.id === b.dataset.edit), q = prompt("Edit query text:", r.query); if (q === null) return;
-    try { await api("/api/test/update", {id: r.id, query: q}); await refresh(); paintWrite(); } catch (e) { toast(e.message, true); } });
-}
-async function saveWrite() {
-  try {
-    const d = await api("/api/test/add", {query: $("#w-query").value.trim(), mode: wMode, slices: [...wSlices], notes: $("#w-notes").value});
-    // Reset the mode too: a leftover "bitemporal" would silently change the next query's hints.
-    $("#w-query").value = ""; $("#w-notes").value = ""; wSlices = new Set(); wMode = "cross_modal"; $("#w-err").textContent = "";
-    toast("Saved " + d.id); await refresh(); paintWrite(); $("#w-query").focus();
-  } catch (e) { $("#w-err").textContent = e.message; }
+function renderResults() {
+  const r = S.results, a = r.agreement, f = r.freeze, sp = r.splits;
+  const tiles = [];
+  if (f) tiles.push(["Test set (frozen)", f.rows + " rows", "sha256 " + f.sha256.slice(0, 10) + "…"]);
+  if (a) tiles.push(["Test labellers agree", a.candidates ? Math.round(100 * a.all_fields_agree / a.candidates) + "%" : "–",
+    `${a.all_fields_agree} of ${a.candidates} identical · intent kappa ${a.intent_cohen_kappa ?? "n/a"}`]);
+  if (r.train_checked) tiles.push(["Training candidates kept", Math.round(100 * r.train_kept / r.train_checked) + "%", `${r.train_kept} of ${r.train_checked} matched the checker`]);
+  if (sp) tiles.push(["Train / val", `${sp.train.rows} / ${sp.val.rows}`, "stratified by intent"]);
+  if (sp) tiles.push(["Leakage removed", String(Object.values(sp.removed_near_dup_vs_refs).reduce((x, y) => x + y, 0)), "near-copies of test, probe or guideline queries"]);
+  $("#results-panel").style.display = tiles.length ? "" : "none";
+  $("#results").innerHTML = tiles.map(([k, v, d]) => `<div><div class="k">${k}</div><div class="v">${esc(v)}</div><div class="d">${esc(d)}</div></div>`).join("");
 }
 
-// ---------- shared label form
-function labelForm(host, {label = null, slices = null, notes = null, query = null, onChange = null} = {}) {
-  const st = {intent: label?.intent ?? null, secondary: new Set(label?.secondary_intents ?? []), entities: new Set(label?.entities ?? []),
-    temporal: label?.temporal ?? "", cloud: label?.cloud_piercing_required ?? false, slices: new Set(slices ?? []), notes: notes ?? "", query};
-  const V = S.vocab;
-  host.innerHTML = `
-    ${query !== null ? `<div class="field"><div class="lbl">Query (edit only to fix it)</div><input type="text" data-f="query"></div>` : ""}
-    <div class="field"><div class="lbl"><span>Intent</span><span>keys 1–6</span></div><div class="intents">${V.intents.map((i, k) => `<button class="intent" data-i="${i}"><span class="key">${k + 1}</span><b>${i}</b><small>${INTENT_HELP[i]}</small></button>`).join("")}</div></div>
-    <div class="grid2" style="gap:12px">
-      <div class="field"><div class="lbl">Secondary intents</div><div class="chips" data-f="secondary">${V.secondary.map(s => `<button class="chip" data-v="${s}">${s}</button>`).join("")}</div></div>
-      <div class="field"><div class="lbl">Cloud piercing required</div><span class="toggle" data-f="cloud"><span class="sw"></span><span data-cloud-text>no</span></span></div></div>
-    <div class="field"><div class="lbl">Entities</div><div class="chips" data-f="entities">${V.entities.map(e => `<button class="chip" data-v="${e}">${e}</button>`).join("")}</div></div>
-    <div class="field"><div class="lbl"><span>Temporal (empty = null)</span><span data-temporal-ok></span></div><input type="text" data-f="temporal" placeholder="e.g. March -> Now">
-      <div class="quick">${["Pre-Event -> Post-Event", "Epoch T1 -> Epoch T2", "1 Year Ago -> Now", "6 Months Ago -> Now", "Monsoon -> Now"].map(q => `<button data-q="${q}">${q}</button>`).join("")}<button data-q="">null</button></div></div>
-    ${slices !== null ? `<div class="field"><div class="lbl">Slices</div><div class="chips" data-f="slices">${V.slices.map(s => `<button class="chip" data-v="${s}" title="${esc(SLICE_HELP[s])}">${s}</button>`).join("")}</div></div>` : ""}
-    ${notes !== null ? `<div class="field"><div class="lbl">Notes</div><input type="text" data-f="notes" placeholder="why this label; 'unsure: …' if unsure"></div>` : ""}
-    <div class="errors" data-errors></div>`;
-  const q = s => host.querySelector(s);
-  if (query !== null) { q('[data-f="query"]').value = st.query; q('[data-f="query"]').oninput = e => { st.query = e.target.value; changed(); }; }
-  q('[data-f="temporal"]').value = st.temporal;
-  if (notes !== null) { q('[data-f="notes"]').value = st.notes; q('[data-f="notes"]').oninput = e => { st.notes = e.target.value; changed(); }; }
-  const temporalOk = buildTemporalRe();
-  const current = () => ({intent: st.intent, secondary_intents: V.secondary.filter(s => st.secondary.has(s)), entities: V.entities.filter(e => st.entities.has(e)),
-    temporal: st.temporal.trim() === "" ? null : st.temporal.trim(), cloud_piercing_required: st.cloud});
-  let vt;
-  function paint() {
-    host.querySelectorAll(".intent").forEach(b => b.classList.toggle("on", b.dataset.i === st.intent));
-    host.querySelectorAll('[data-f="secondary"] .chip').forEach(b => { b.classList.toggle("on", st.secondary.has(b.dataset.v)); b.disabled = b.dataset.v === st.intent; });
-    host.querySelectorAll('[data-f="entities"] .chip').forEach(b => b.classList.toggle("on", st.entities.has(b.dataset.v)));
-    host.querySelectorAll('[data-f="slices"] .chip').forEach(b => b.classList.toggle("on", st.slices.has(b.dataset.v)));
-    q('[data-f="cloud"]').classList.toggle("on", st.cloud); q("[data-cloud-text]").textContent = st.cloud ? "yes" : "no";
-    const t = st.temporal.trim(); q("[data-temporal-ok]").innerHTML = !t ? `<span>null</span>` : temporalOk(t) ? `<span class="ok-msg">✓ valid</span>` : `<span style="color:var(--bad)">not in the grammar</span>`;
-  }
-  function changed() { paint(); onChange && onChange(); validate(); }
-  function validate() {
-    clearTimeout(vt); vt = setTimeout(async () => {
-      if (!st.intent) { q("[data-errors]").textContent = "Pick an intent."; return; }
-      try { const d = await api("/api/validate", {label: current()}); q("[data-errors]").textContent = d.ok ? "" : d.errors.join(" · "); } catch (e) {}
-    }, 120);
-  }
-  function setIntent(i) { st.intent = i; st.secondary.delete(i); if (st.cloud && i !== "crossmodal_fusion") st.secondary.add("crossmodal_fusion"); changed(); }
-  host.querySelectorAll(".intent").forEach(b => b.onclick = () => setIntent(b.dataset.i));
-  const toggleIn = (set, v) => set.has(v) ? set.delete(v) : set.add(v);
-  host.querySelectorAll('[data-f="secondary"] .chip').forEach(b => b.onclick = () => { toggleIn(st.secondary, b.dataset.v); changed(); });
-  host.querySelectorAll('[data-f="entities"] .chip').forEach(b => b.onclick = () => { toggleIn(st.entities, b.dataset.v); changed(); });
-  host.querySelectorAll('[data-f="slices"] .chip').forEach(b => b.onclick = () => { toggleIn(st.slices, b.dataset.v); changed(); });
-  q('[data-f="cloud"]').onclick = () => { st.cloud = !st.cloud; if (st.cloud && st.intent && st.intent !== "crossmodal_fusion") st.secondary.add("crossmodal_fusion"); changed(); };
-  q('[data-f="temporal"]').oninput = e => { st.temporal = e.target.value; changed(); };
-  host.querySelectorAll(".quick button").forEach(b => b.onclick = () => { st.temporal = b.dataset.q; q('[data-f="temporal"]').value = st.temporal; changed(); });
-  paint(); if (st.intent) validate();
-  return {get label() { return current(); }, get slices() { return V.slices.filter(s => st.slices.has(s)); }, get notes() { return st.notes; }, get query() { return st.query; },
-    setIntentByKey(k) { const i = V.intents[k - 1]; if (i) setIntent(i); }};
-}
-function buildTemporalRe() {
-  const V = S.vocab, months = V.months.join("|"), named = V.named_endpoints.map(n => n.replace(/-/g, "\\-")).join("|");
-  const ep = new RegExp(`^(?:${named}|(?:${months})(?: \\d{4})?|\\d{4}|\\d{4}-\\d{2}-\\d{2}|1 (?:Day|Week|Month|Year) Ago|(?:[2-9]|[1-9]\\d+) (?:Day|Week|Month|Year)s Ago)$`);
-  return t => { const p = t.split(" -> "); return p.length === 2 && ep.test(p[0]) && ep.test(p[1]); };
-}
-
-// ---------- label
-let labelF = null, labelRowId = null;
-function viewLabel() {
-  if (S.frozen) { $("#w-body").innerHTML = `<div class="banner info">The test set is frozen. Labels can't be changed.</div>`; return; }
-  const rows = S.test_rows, todo = rows.filter(r => !r.label);
-  const r = rows.find(x => x.id === labelRowId) || todo[0];
-  if (!r) { $("#w-body").innerHTML = `<div class="banner good">Every row is labelled. Next: freeze, from the dashboard.</div><div class="panel">${labelTable()}</div>`; bindLabelTable(); return; }
-  labelRowId = r.id;
-  $("#w-body").innerHTML = `<div class="panel"><div class="meta"><span class="pill">${r.id}</span><span class="pill">${r.mode}</span>${r.label ? `<span class="pill good">changing an earlier label</span>` : ""}</div>
-    <div class="query-card">${esc(r.query)}</div><div id="lf"></div>
-    <div class="actions"><button class="btn primary" id="l-save">Save &amp; next <span class="k">⌘↵</span></button><span class="spacer"></span><span class="card-note">${todo.length} left</span></div>${RULES}</div>
-    ${rows.some(x => x.label) ? `<div class="panel"><h2>Labelled (click an ID to change it)</h2>${labelTable()}</div>` : ""}`;
-  labelF = labelForm($("#lf"), {label: r.label, slices: r.slices, notes: r.notes});
-  $("#l-save").onclick = saveLabel; bindLabelTable();
-}
-function labelTable() {
-  return `<table><thead><tr><th>ID</th><th>Query</th><th>Intent</th><th>Secondary</th><th>Entities</th><th>Temporal</th><th>Cloud</th></tr></thead><tbody>${
-    S.test_rows.filter(r => r.label).reverse().map(r => `<tr><td><button class="rowbtn" data-relabel="${r.id}">${r.id}</button></td><td>${esc(r.query)}</td><td>${r.label.intent}</td><td>${r.label.secondary_intents.join(", ") || "–"}</td><td>${r.label.entities.join(", ") || "–"}</td><td>${esc(r.label.temporal ?? "null")}</td><td>${r.label.cloud_piercing_required ? "yes" : "no"}</td></tr>`).join("")}</tbody></table>`;
-}
-function bindLabelTable() { document.querySelectorAll("[data-relabel]").forEach(b => b.onclick = () => { labelRowId = b.dataset.relabel; viewLabel(); window.scrollTo(0, 0); }); }
-async function saveLabel() {
-  try { await api("/api/test/update", {id: labelRowId, label: labelF.label, slices: labelF.slices, notes: labelF.notes}); toast("Saved " + labelRowId); labelRowId = null; await refresh(); viewLabel(); window.scrollTo(0, 0); }
-  catch (e) { toast(e.message, true); }
-}
-
-// ---------- freeze
-function viewFreeze() {
-  const st = S.test_stats;
-  if (S.frozen) { $("#w-body").innerHTML = `<div class="banner good">Frozen ${new Date(S.freeze_info.frozen_at).toLocaleString()} · ${S.freeze_info.rows} rows. Commit test.jsonl and test.sha256.</div>`; return; }
-  const short = [...st.intents, ...st.coverage].filter(x => x.n < x.target);
-  $("#w-body").innerHTML = `<div class="panel"><p>${st.rows} rows, all labelled.${st.rows < 150 ? ` <b>The plan is at least 150.</b>` : ""} Freezing is permanent: the file can't be edited afterwards, and the generator unlocks.</p>
-    ${short.length ? `<div class="banner warn">Below target: ${short.map(x => `${esc(x.name)} ${x.n}/${x.target}`).join(" · ")}. Freezing is allowed, but those numbers will have wide confidence intervals.</div>` : `<div class="banner good">Every intent and coverage target is met.</div>`}
-    <div class="actions"><input type="text" id="fz" placeholder="type freeze" style="max-width:180px"><button class="btn primary" id="fz-btn">Freeze test set</button></div></div>`;
-  $("#fz-btn").onclick = async () => { try { const d = await api("/api/test/freeze", {confirm: $("#fz").value.trim()}); toast(`Frozen: ${d.rows} rows`); await refresh(); viewFreeze(); } catch (e) { toast(e.message, true); } };
-}
-
-// ---------- review
-let rev = null, revF = null, revDirty = false;
-async function viewReview() {
-  try { rev = await api("/api/review/next"); } catch (e) { $("#w-body").innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; return; }
-  if (!rev.item) { $("#w-body").innerHTML = `<div class="banner good">Everything is reviewed. Next: build splits, from the dashboard.</div>`; return; }
-  const it = rev.item; revDirty = false;
-  $("#w-body").innerHTML = `<div class="panel"><div class="meta"><span class="pill">${it.mode}</span><span class="pill">intended slice: ${it.slice}</span>${it.proposal_valid ? "" : `<span class="pill warn">proposal invalid</span>`}</div>
-    <div class="query-card">${esc(it.query)}</div>
-    ${it.proposal_valid ? "" : `<div class="banner warn">The generator's label fails the schema: ${esc(it.proposal_errors.join("; "))}. Fix it or reject.</div>`}
-    <div id="rf"></div>
-    <div class="actions"><button class="btn good" id="r-accept">Accept <span class="k">A</span></button><button class="btn primary hidden" id="r-edit">Save edit <span class="k">⌘↵</span></button>
-      <select id="r-reason" style="max-width:200px">${Object.entries(S.vocab.reject_reasons).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>
-      <button class="btn bad" id="r-reject">Reject <span class="k">R</span></button><button class="btn" id="r-skip">Skip <span class="k">S</span></button><span class="spacer"></span><button class="btn" id="r-undo">Undo <span class="k">U</span></button></div>${RULES}</div>`;
-  revF = labelForm($("#rf"), {label: it.proposal_valid ? it.proposed_label : null, slices: [it.slice], query: it.query,
-    onChange: () => { revDirty = true; $("#r-edit").classList.remove("hidden"); $("#r-accept").disabled = true; }});
-  $("#r-accept").disabled = !it.proposal_valid;
-  $("#r-accept").onclick = () => decide("accept"); $("#r-edit").onclick = () => decide("edit");
-  $("#r-reject").onclick = () => decide("reject"); $("#r-skip").onclick = () => decide("skip"); $("#r-undo").onclick = undoReview;
-}
-async function decide(decision) {
-  if (!rev?.item) return;
-  const body = {id: rev.item.id, decision};
-  if (decision === "edit") Object.assign(body, {label: revF.label, slices: revF.slices, query: revF.query});
-  if (decision === "reject") body.reason = $("#r-reason").value;
-  try { const d = await api("/api/review/decide", body); if (decision !== "skip") toast(d.decision + "ed"); await refresh(); viewReview(); } catch (e) { toast(e.message, true); }
-}
-async function undoReview() { try { const d = await api("/api/review/undo", {}); toast("Undid " + d.undone); await refresh(); viewReview(); } catch (e) { toast(e.message, true); } }
-
-// ---------- re-label
-let rel = null, relF = null;
-async function viewRelabel() {
-  if (!S.relabel.available) { $("#w-body").innerHTML = `<div class="banner info">${S.frozen ? "Opens " + new Date(S.relabel.opens_at).toLocaleString() : "Opens 3 days after freezing"}. The wait is so you don't remember your first labels.</div>`; return; }
-  try { rel = await api("/api/relabel/next"); } catch (e) { $("#w-body").innerHTML = `<div class="banner bad">${esc(e.message)}</div>`; return; }
-  if (!rel.item) { $("#w-body").innerHTML = `<div class="banner good">Done. Next: compute agreement, from the dashboard.</div>`; return; }
-  $("#w-body").innerHTML = `<div class="panel"><div class="banner info">Blind: your earlier label is not shown and is never sent to this page.</div><div class="meta"><span class="pill">${rel.item.mode}</span></div>
-    <div class="query-card">${esc(rel.item.query)}</div><div id="rlf"></div><div class="actions"><button class="btn primary" id="rl-save">Save &amp; next <span class="k">⌘↵</span></button></div></div>`;
-  relF = labelForm($("#rlf")); $("#rl-save").onclick = saveRelabel;
-}
-async function saveRelabel() { try { await api("/api/relabel/save", {id: rel.item.id, label: relF.label}); toast("Saved"); await refresh(); viewRelabel(); } catch (e) { toast(e.message, true); } }
-
-// ---------- keyboard
-const typing = e => ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName);
-document.addEventListener("keydown", e => {
-  const mod = e.metaKey || e.ctrlKey;
-  if (mod && e.key === "Enter") {
-    if (view === "label") { e.preventDefault(); saveLabel(); }
-    if (view === "review" && revDirty) { e.preventDefault(); decide("edit"); }
-    if (view === "relabel" && rel?.item) { e.preventDefault(); saveRelabel(); }
-    return;
-  }
-  if (typing(e) || mod || e.altKey) return;
-  if (e.key === "Escape" && view !== "home") return goHome();
-  if (/^[1-6]$/.test(e.key)) { const f = {label: labelF, review: revF, relabel: relF}[view]; if (f) { e.preventDefault(); f.setIntentByKey(+e.key); } return; }
-  if (view === "review" && rev?.item) {
-    const k = e.key.toLowerCase();
-    if (k === "a" && !revDirty && rev.item.proposal_valid) decide("accept");
-    else if (k === "r") decide("reject"); else if (k === "s") decide("skip"); else if (k === "u") undoReview();
-  }
-});
-
-// Live updates on the dashboard: every 3 s while a job runs, otherwise every 30 s.
-setInterval(() => { if (view === "home" && S && (Object.values(S.jobs).some(j => j.running) || Date.now() % 30000 < 3000)) refresh(); }, 3000);
 refresh();
+setInterval(() => { if (!document.hidden) refresh(); }, 3000);
 </script>
 </body>
 </html>

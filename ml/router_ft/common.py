@@ -21,6 +21,8 @@ ACTIVITY = DATA / "activity.jsonl"  # one timestamp per test query written / lab
 TRAIN = DATA / "train.jsonl"
 VAL = DATA / "val.jsonl"
 RESULTS = Path(os.environ.get("ROUTER_FT_RESULTS", ROOT / "results" / "router_ft"))
+AUTO = DATA / "auto"  # intermediate files of the automatic pipeline (auto_dataset.py)
+PIPELINE_STATUS = RESULTS / "pipeline_status.json"
 
 # UI modality -> hints, exactly as routes_query.py / query_service.py derive them.
 HINT_CONFIGS = {
