@@ -94,3 +94,84 @@ in Phase 3 with warm-up excluded.
 - With about 150 test examples, small slices (e.g. Hinglish) will have wide
   confidence intervals. Set a minimum count per slice when planning the
   test set.
+
+---
+
+## 2026-10-28 · Phase 1: spec, guidelines, probes
+
+### Two more findings from reading the code
+
+- **Only `intent` reaches the API response.** `EvidenceBuilder.build_evidence`
+  reads `plan.intent` and `plan.modality` and nothing else; it builds its own
+  DAG. Entities, temporal, cloud flag and secondary intents are computed by
+  `plan_execution()` and discarded. Consequence: intent is the headline metric,
+  and the other four fields are "plan quality". The write-up must not claim
+  that better entity extraction improves the product today.
+- **`has_sar_pair` is true by default.** `QueryRequest.modality` defaults to
+  `"cross_modal"` and so does the frontend (`services/api.ts`), and
+  `cross_modal` sets `has_sar_pair=True`. Most real traffic carries it.
+
+### Schema decisions (v1.0, pinned in `ml/router_ft/schema.py`)
+
+| Decision | Why |
+|---|---|
+| `secondary_intents` ⊆ {crossmodal_fusion, visual_grounding, scene_captioning} | Those are the only secondaries `plan_execution()` can consume. |
+| Primary precedence: change > fusion > SAR > grounding > captioning > optical | The most data-hungry analysis decides which inputs load. **Differs from the regex**, which puts fusion before change: "what changed under the clouds" is a change question with an obstacle. |
+| `cloud_piercing_required` = obstruction stated or implied, independent of intent | The regex ties it to the fusion intent and to any weather word. A fusion request with no obstruction is `false`. Coupling rule: if the flag is true and the primary isn't fusion, fusion must be a secondary. |
+| `has_bitemporal_pair` ⇒ intent = bitemporal_change; the text's requests become secondaries | Keeps the existing contract: change mode runs the change pipeline. |
+| `has_sar_pair` never changes the label | It is the production default, so treating it as "wants SAR" would route nearly everything to fusion. It has no effect in `classify_intent` today either. |
+| Entities = categories *mentioned* as physical features, excluding negated ones | Easier to label consistently than "is it the target?". |
+| Temporal: `null` or `"<start> -> <end>"`, endpoints from a closed grammar (named, year, month [year], ISO date, "N Units Ago") | Exact match needs one canonical form. A single time point with no comparison is `null`. |
+| New slice tag `keyword_trap` | Routing keywords used in the wrong sense are the regex's most predictable failure and deserve their own breakdown. |
+
+Guideline examples live in `data/router_ft/guideline_examples.jsonl` (39 rows,
+all valid under `schema.validate`) and are rendered into GUIDELINES.md by
+`render_guidelines.py`.
+
+**Mistake, caught:** the first version of `render_guidelines.py` used a regex
+that, with empty marker blocks, matched from one section's BEGIN marker to the
+*next* section's END, and silently deleted §5 and §6 of the guidelines. It was
+caught because the rendered table count (19) didn't match the example count
+(39). Fixed by forbidding a match from crossing a BEGIN marker, plus asserts
+that every block is filled and every example appears. Rendering twice now
+gives identical output.
+
+### Regex adapter (`ml/router_ft/routers/regex_router.py`)
+
+It calls the real `AgentRouter.plan_execution` and only maps *formatting*:
+secondaries are read back from the plan's DAG text (they are not a plan field),
+and "Between March And June" becomes "March -> June". A greedy capture like
+"Between March And June Near The Runway Please" stays wrong, because that is a
+real extraction error. Phase 3 will report the regex's valid-JSON rate as N/A,
+since it never produces JSON.
+
+### Probe results (`run_probes.py` → `PROBES.md`)
+
+20 hand-picked probes, gold labels from the guidelines, run through the regex:
+
+- Fully correct (all 5 fields): **7 / 20**
+- intent 12/20 · secondary 16/20 · entities 14/20 · temporal 15/20 · cloud 17/20
+
+Failure patterns seen:
+- **Paraphrases without a keyword fall to `optical_vqa`**: "did the airstrip get
+  longer", "tree cover thinned out", "boats that weren't there in the earlier pass".
+- **Any weather word or "cloud" forces fusion + cloud piercing**, even when
+  negated ("no clouds today") or non-weather ("cloud bucket").
+- **Keyword traps:** "Change the basemap" → change detection; "new construction"
+  → change even when the ask is to mark it.
+- **Exact-token entity matching:** "paddies", "tree cover", "boats", "fields"
+  are missed; "ignore the ships" still adds `maritime`.
+- **Temporal extraction misses most forms:** "since March", "past two years",
+  "since 2022", "pre-monsoon and post-monsoon".
+- What works: queries with the English keyword, even inside Hinglish ("kya
+  runway pe kuch change hua"), radar vocabulary, and explicit before/after.
+
+**These are not a measurement.** The probes were picked to expose failures, so
+the rates are biased low by design. The hand-written test set is the
+measurement.
+
+### Leakage rules added
+
+The guideline examples and the probes are seen by the generator and in prompt
+design. They must not be reused or lightly paraphrased in the test set, and the
+Phase 2 near-duplicate check will compare test against both.
