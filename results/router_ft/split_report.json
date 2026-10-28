@@ -1,0 +1,67 @@
+{
+  "reviewed_kept": 657,
+  "removed_exact_dup_in_pool": 0,
+  "near_dup_vs_refs_sensitivity": {
+    "0.70": {
+      "test": 2
+    },
+    "0.80": {},
+    "0.85": {},
+    "0.90": {},
+    "0.95": {}
+  },
+  "removed_near_dup_vs_refs": {},
+  "removed_near_dup_vs_refs_examples": [],
+  "removed_near_dup_in_pool": 0,
+  "train": {
+    "rows": 564,
+    "intent": {
+      "sar_vqa": 82,
+      "bitemporal_change": 106,
+      "scene_captioning": 86,
+      "crossmodal_fusion": 69,
+      "visual_grounding": 88,
+      "optical_vqa": 133
+    },
+    "slices": {
+      "negation": 79,
+      "hint_driven": 23,
+      "typo_hinglish": 90,
+      "paraphrase": 116,
+      "clean": 85,
+      "compound": 102,
+      "keyword_trap": 69
+    },
+    "source": {
+      "openai/gpt-oss-120b": 564
+    }
+  },
+  "val": {
+    "rows": 93,
+    "intent": {
+      "bitemporal_change": 18,
+      "crossmodal_fusion": 11,
+      "optical_vqa": 22,
+      "sar_vqa": 14,
+      "scene_captioning": 14,
+      "visual_grounding": 14
+    },
+    "slices": {
+      "keyword_trap": 14,
+      "paraphrase": 19,
+      "typo_hinglish": 18,
+      "clean": 16,
+      "negation": 11,
+      "hint_driven": 3,
+      "compound": 12
+    },
+    "source": {
+      "openai/gpt-oss-120b": 93
+    }
+  },
+  "thresholds": {
+    "vs_refs": 0.85,
+    "in_pool": 0.9,
+    "vectoriser": "char_wb 3-5 TF-IDF cosine"
+  }
+}

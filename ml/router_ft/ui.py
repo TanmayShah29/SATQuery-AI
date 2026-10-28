@@ -39,7 +39,7 @@ EXPECTED_S = {
 
 # Groq free tier: each model allows 200K tokens/day, refilled gradually. Once a model hits it, this sets the pace.
 GROQ_TPD = 200_000
-TOKENS_PER_STEP = {"train_generate": 3000 / generate.BATCH, "train_check": 2600 / auto_dataset.LABEL_BATCH}  # per item, measured
+TOKENS_PER_STEP = {"train_generate": 3000 / generate.BATCH}  # per item, measured; the checker is on OpenRouter now
 
 
 def _now():

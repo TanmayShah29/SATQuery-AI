@@ -32,6 +32,7 @@ MODELS = ("openai/gpt-oss-120b", "qwen/qwen3.8-27b")
 BATCH = 10
 PLAN_SEED = 7
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"  # used for model ids ending in ":free"
 PACE_S = 25  # seconds per call per model on the 8k tokens/min free tier
 
 # Raw targets per slice, before review losses (~1060 candidates for ~700 kept).
@@ -88,10 +89,10 @@ TEMPORAL: null, or "<start> -> <end>" with endpoints from: Pre-Event, Post-Event
 "since March" -> "March -> Now"; "past two years" -> "2 Years Ago -> Now"; "before and after" -> "Pre-Event -> Post-Event"; "previous image vs this one" -> "Epoch T1 -> Epoch T2"; "pre-monsoon vs post-monsoon" -> "Pre-Event -> Post-Event". A single time point with no comparison -> null. No stated time -> null. Hints never create a temporal value."""
 
 
-def _client_headers():
-    key = (dotenv_values(ROOT / "backend" / ".env").get("GROQ_API_KEY") or "").strip()
+def _client_headers(env_key="GROQ_API_KEY"):
+    key = (dotenv_values(ROOT / "backend" / ".env").get(env_key) or "").strip()
     if not key:
-        raise SystemExit("GROQ_API_KEY not found in backend/.env")
+        raise SystemExit(f"{env_key} not found in backend/.env")
     return {"Authorization": f"Bearer {key}"}
 
 
@@ -166,18 +167,27 @@ def build_messages(cell, guide_rows):
 WAIT_LOG = None  # callable(model, wait_s, msg) for rate-limit waits; auto_dataset points it at the dashboard
 
 
-def call_groq(model, messages, headers, max_retries=6, temperature=0.9):
-    body = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": 4000,
+def call_groq(model, messages, headers, max_retries=6, temperature=0.9, max_tokens=4000):
+    """One chat completion. Groq by default; OpenRouter free models (ids ending in ":free") go there."""
+    body = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens,
             "response_format": {"type": "json_object"}}
-    if model.startswith("openai/gpt-oss"):
+    url = GROQ_URL
+    if model.endswith(":free"):
+        url, headers = OPENROUTER_URL, _client_headers("OPENROUTER_API_KEY")
+        body.pop("response_format")  # not every free model accepts it; parse_items copes with plain JSON
+        body["reasoning"] = {"enabled": False}  # otherwise reasoning models spend max_tokens before answering
+    elif model.startswith("openai/gpt-oss"):
         body["reasoning_effort"] = "low"
     attempt = 0
     while attempt < max_retries:
-        r = httpx.post(GROQ_URL, headers=headers, json=body, timeout=120)
+        r = httpx.post(url, headers=headers, json=body, timeout=300)
         if r.status_code != 429:
             attempt += 1  # rate-limit waits don't use up retries: the daily token cap can mean many of them
         if r.status_code == 429 or r.status_code >= 500:
             wait = float(r.headers.get("retry-after", 2 ** attempt * 5))
+            if r.status_code == 429 and "retry-after" not in r.headers:
+                reset = r.headers.get("x-ratelimit-reset")  # OpenRouter: epoch ms when the limit resets
+                wait = max(60.0, float(reset) / 1000 - time.time() + 5) if reset else 60.0
             try:
                 why = r.json()["error"]["message"].split(". Please")[0]
             except Exception:
@@ -189,14 +199,20 @@ def call_groq(model, messages, headers, max_retries=6, temperature=0.9):
             continue
         r.raise_for_status()
         d = r.json()
+        if "choices" not in d:  # OpenRouter can return an upstream provider error inside a 200
+            msg = f"{model} provider error: {str(d.get('error', d))[:200]}; retrying in 30s"
+            WAIT_LOG(model, 30, msg) if WAIT_LOG else print(msg)
+            time.sleep(30)
+            continue
         return d["choices"][0]["message"]["content"], d.get("usage", {})
     raise RuntimeError("too many retries")
 
 
 def parse_items(text, key):
     """Models don't always honour the requested wrapper: accept {key: [...]}, a bare list, or
-    any single list value, and turn bare strings into {"query": ...}."""
-    obj = json.loads(text)
+    any single list value, and turn bare strings into {"query": ...}. Text around the JSON (e.g. a code fence) is ignored."""
+    starts = [i for i in (text.find("{"), text.find("[")) if i >= 0]
+    obj = json.loads(text[min(starts):max(text.rfind("}"), text.rfind("]")) + 1] if starts else text)
     if isinstance(obj, dict):
         obj = obj.get(key, next((v for v in obj.values() if isinstance(v, list)), []))
     if not isinstance(obj, list):

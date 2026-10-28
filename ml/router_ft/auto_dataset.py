@@ -40,8 +40,12 @@ from common import (AUTO, GENERATED, GUIDE_EXAMPLES, HINT_CONFIGS, PIPELINE_STAT
 TEST_GEN_MODEL = "qwen/qwen3.8-27b"
 TEST_LABELLERS = ("qwen/qwen3.8-27b", "openai/gpt-oss-20b")
 TRAIN_GEN_MODEL = "openai/gpt-oss-120b"
-TRAIN_CHECKER = "openai/gpt-oss-20b"
+# Was openai/gpt-oss-20b on Groq until its 200K tokens/day cap stalled the run (LOG.md, 2026-10-28). OpenRouter
+# free models are capped by requests (50/day), not tokens, so the checker uses bigger batches. Chosen by a trial
+# on 30 already-checked candidates: 30/30 valid labels; Gemma's free endpoints were rate-limited upstream.
+TRAIN_CHECKER = "nvidia/nemotron-3-ultra-550b-a55b:free"
 LABEL_BATCH = 10
+CHECK_BATCH = 30
 MIN_TEST_ROWS = 150
 MAX_TEST_ROUNDS = 3  # extra rounds of test candidates if too few labels agree
 PROMPT_VERSION = "auto-v1"
@@ -60,7 +64,7 @@ TEST_REGIONS = ["the Odisha coast", "Kaziranga", "Hyderabad", "Pune", "Goa", "th
                 "Lucknow", "Mangaluru port", "Uttarakhand", "Nagpur", "Bhuj", "Thoothukudi", "no named place"]
 
 TEST_CANDIDATES = AUTO / "test_candidates.jsonl"
-TRAIN_CHECKS = AUTO / "train_checks.jsonl"
+TRAIN_CHECKS = AUTO / f"train_checks_{TRAIN_CHECKER.split('/')[-1].removesuffix(':free')}.jsonl"
 
 
 def _now():
@@ -90,7 +94,10 @@ class Status:
                      "stages": [old.get(k) or {"key": k, "title": t, "by": by, "status": "pending", "done": 0,
                                                "target": None, "started": None, "ended": None, "samples": []}
                                 for k, t, by in self.STAGES]}
-        for s in self.data["stages"]:
+        for s, (k, t, by) in zip(self.data["stages"], self.STAGES):
+            if s["by"] != by:  # model changed (e.g. a new checker): this stage starts over
+                s.update(by=by, status="pending", done=0, target=None, started=None, ended=None, samples=[])
+            s["title"] = t
             if s["status"] == "running":
                 s["status"] = "pending"  # interrupted last time; it resumes
         self.save()
@@ -159,7 +166,7 @@ def _label_messages(items):
 
 def label_batch(model, items, headers):
     """Blind labels for a batch; returns [(label|None, errors)] aligned with items."""
-    text, _ = generate.call_groq(model, _label_messages(items), headers, temperature=0)
+    text, _ = generate.call_groq(model, _label_messages(items), headers, temperature=0, max_tokens=8000)
     got = {}
     for e in generate.parse_items(text, "labels"):
         if isinstance(e, dict) and isinstance(e.get("i"), int):
@@ -322,15 +329,15 @@ def _check_loop(st, headers, gen_done):
                 return
             time.sleep(5)
             continue
-        if len(valid) < LABEL_BATCH and not gen_done.is_set():
+        if len(valid) < CHECK_BATCH and not gen_done.is_set():
             time.sleep(5)
             continue
-        batch = valid[:LABEL_BATCH]
+        batch = valid[:CHECK_BATCH]
         t0 = time.perf_counter()
         try:
             labels = label_batch(TRAIN_CHECKER, batch, headers)
-        except (json.JSONDecodeError, AttributeError, RuntimeError, httpx.HTTPError) as exc:
-            st.log(f"train_check batch failed ({exc}); retrying")
+        except Exception as exc:  # never let the checker thread die silently; the batch is retried
+            st.log(f"train_check batch failed ({type(exc).__name__}: {exc}); retrying")
             time.sleep(10)
             continue
         for c, (label, _) in zip(batch, labels):
@@ -360,6 +367,10 @@ def stage_train(st, headers):
         checker.join()
     if stats.get("failed_calls"):
         raise RuntimeError(f"{stats['failed_calls']} training-generation calls failed; press Start again to resume")
+    checked = {r["id"] for r in read_jsonl(TRAIN_CHECKS)}
+    unchecked = sum(1 for p in GENERATED.glob("*.jsonl") for r in read_jsonl(p) if r.get("query") and r["id"] not in checked)
+    if unchecked:
+        raise RuntimeError(f"the checker stopped with {unchecked} candidates unchecked; press Start again to resume")
     st.update("train_generate", status="done", target=count(), done=count())
 
     # Turn the checks into review records (the same shape review.py writes) for build_splits.py.

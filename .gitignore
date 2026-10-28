@@ -72,3 +72,5 @@ ml/router_ft/adapters/
 ml/router_ft/fused/
 ml/router_ft/models/
 *.gguf
+results/router_ft/pipeline.pid
+results/router_ft/pipeline_status.json

@@ -324,3 +324,45 @@ tools (`test_writer.py`, `review.py`, `agreement.py`) are unchanged and still wo
 - kappa is `NaN` when only one intent occurs, which isn't valid JSON; it's now written as `null`;
 - `build_splits.py` put a small pool entirely into val; val is now capped at 1/7 of the pool;
 - stage clocks and targets were wrong around top-up rounds and the parallel checker.
+
+## 2026-10-28: Phase 2 part 4. The dataset run, and a checker change
+
+**Run:** test set (≈37 min) and training generation finished on Groq. The training checker
+(`gpt-oss-20b`) then hit Groq's free-tier cap of **200K tokens per model per day** after 467
+candidates. Groq refills it gradually, so the run continued at about one batch per 15 minutes,
+which looked like a hang. Projected finish: about 18 hours.
+
+**Decision: move the training checker to OpenRouter's free tier and re-check *all* training
+candidates with it.** OpenRouter free models are capped by requests (50/day), not tokens, so the
+checker sends batches of 30 (~36 requests in all). OpenRouter has no free gpt-oss, so the model
+changed. A trial on 10–30 candidates gpt-oss-20b had already checked:
+- `gemma-4-31b-it:free`, `gemma-4-26b-a4b-it:free`: refused, upstream (Google AI Studio) rate-limited;
+- `nemotron-3.5-lightning:free`: spent all 8,000 output tokens on reasoning, no answer;
+- `inkling:free`: only available to listed agent apps;
+- `nemotron-3.5-super-vl:free`: 9/10 valid, 5/10 matched gpt-oss-20b;
+- **`nemotron-3-ultra-550b-a55b:free`, reasoning off: 30/30 valid in 43 s, 21/30 matched gpt-oss-20b. Chosen.**
+
+Re-checking everything, rather than only the remainder, keeps one checker behind every kept
+training row. gpt-oss-20b's 467 checks are kept in `data/router_ft/auto/train_checks_gpt-oss-20b.jsonl`
+for comparison (`compare_checkers.py` → `results/router_ft/checker_agreement.json`): on 444
+candidates both labelled, intent kappa 0.914, and the same keep/reject decision 79.1% of the time.
+
+**Results** (details and sources in DATASET.md):
+- test: 189 rows frozen (`bdf44c0f…`), 63% of candidates agreed on all fields, intent kappa 0.889;
+- training pool: 657 of 1,060 kept (62%); train 564, val 93; leakage check removed nothing.
+
+**Findings to carry into Phase 3:**
+- `hint_driven` test candidates agreed only 35% of the time; 14 rows survive, so that slice's
+  numbers will be noisy;
+- no training row has an empty entity list, while 20 test rows do; check entity over-prediction.
+
+**Bugs found and fixed:**
+- the dashboard never reaped the finished pipeline process, so Stop looked broken (zombie PID);
+  `auto_dataset.py` now also handles SIGTERM and records the stop;
+- rate-limit waits were invisible; they are now logged with the reason and resume time, the
+  dashboard shows a "waiting on the limit" banner, and the time estimate respects the token cap;
+- six 429s in a row failed a call; 429 waits no longer use up retries;
+- OpenRouter returns some provider errors inside a 200 response; this crashed the checker
+  thread silently, and the pipeline still "finished" with 67 candidates checked. Such
+  responses are now retried, any checker error is logged and retried, and the training stage
+  refuses to finish while any candidate is unchecked.

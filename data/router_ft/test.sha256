@@ -1,0 +1,6 @@
+{
+  "sha256": "bdf44c0feb6e0f2ff462dd02c0fb13ecfd0bc0592f278a8e62376b64198ac0e5",
+  "rows": 189,
+  "frozen_at": "2026-10-28T10:27:02+00:00",
+  "source": "auto: LLM-written queries, two-LLM agreed labels"
+}

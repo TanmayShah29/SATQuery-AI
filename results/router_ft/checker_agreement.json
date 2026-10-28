@@ -1,0 +1,16 @@
+{
+  "candidates_checked_by_both": 444,
+  "labels_identical": 292,
+  "per_field_agreement": {
+    "intent": 0.93,
+    "secondary_intents": 0.901,
+    "entities": 0.831,
+    "temporal": 0.914,
+    "cloud_piercing_required": 0.984
+  },
+  "intent_kappa": 0.914,
+  "kept_by_gpt-oss-20b": 277,
+  "kept_by_nemotron": 284,
+  "kept_by_both": 234,
+  "keep_decision_agreement": 0.791
+}

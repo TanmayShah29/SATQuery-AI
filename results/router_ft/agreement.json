@@ -1,0 +1,45 @@
+{
+  "labellers": [
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "candidates": 298,
+  "both_valid": 289,
+  "intent_cohen_kappa": 0.889,
+  "raw_agreement": {
+    "intent": 0.91,
+    "secondary_intents": 0.907,
+    "entities": 0.789,
+    "temporal": 0.945,
+    "cloud_piercing_required": 0.993
+  },
+  "all_fields_agree": 189,
+  "intended_intent_matches_agreed": 0.926,
+  "note": "Inter-model agreement between two LLM labellers (not human). Only all-fields-agree rows enter the test set.",
+  "kept_by_slice": {
+    "hint_driven": 14,
+    "keyword_trap": 28,
+    "clean": 35,
+    "paraphrase": 43,
+    "negation": 23,
+    "typo_hinglish": 22,
+    "compound": 24
+  },
+  "kept_by_intent": {
+    "bitemporal_change": 49,
+    "visual_grounding": 22,
+    "crossmodal_fusion": 26,
+    "sar_vqa": 31,
+    "optical_vqa": 38,
+    "scene_captioning": 23
+  },
+  "dropped_by_slice": {
+    "hint_driven": 26,
+    "keyword_trap": 12,
+    "clean": 15,
+    "paraphrase": 17,
+    "negation": 8,
+    "typo_hinglish": 15,
+    "compound": 16
+  }
+}
