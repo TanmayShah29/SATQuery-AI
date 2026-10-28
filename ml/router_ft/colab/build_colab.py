@@ -86,6 +86,9 @@ print(subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total", "--format=c
         code("""
 # 2. Libraries (Colab already has torch and transformers)
 !pip -q install -U peft bitsandbytes accelerate
+# Colab ships an old torchao that current peft refuses to load (ImportError in PeftModel.from_pretrained);
+# nothing in this notebook uses torchao.
+!pip -q uninstall -y torchao
 import importlib.metadata as md
 VERSIONS = {p: md.version(p) for p in ["torch", "transformers", "peft", "bitsandbytes", "accelerate"]}
 print(VERSIONS)
