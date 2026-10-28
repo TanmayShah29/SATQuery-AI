@@ -66,3 +66,9 @@ data/sample/uploads/
 # Large local model checkpoints
 data/weights/*.pt
 !data/weights/bigearthnet_adapter.pt
+
+# Router fine-tune (ml/router_ft): model artifacts stay out of git
+ml/router_ft/adapters/
+ml/router_ft/fused/
+ml/router_ft/models/
+*.gguf
