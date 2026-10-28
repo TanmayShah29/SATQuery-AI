@@ -64,9 +64,12 @@ def build_notebook(manifest):
 
 **Before you start:** Runtime → Change runtime type → **T4 GPU** → Save. Then Runtime → **Run all**.
 
-You'll be asked twice:
-1. **Upload** `router_ft_3b_data.zip` (cell 3).
-2. **Allow Google Drive** (cell 10). The results are saved to `MyDrive/router_ft_3b/`.
+You'll be asked twice, both in cell 3:
+1. **Allow Google Drive.** Everything is saved to `MyDrive/router_ft_3b/`.
+2. **Upload** `router_ft_3b_data.zip` (only the first time; it's then kept in Drive).
+
+**If Colab disconnects or resets:** reconnect, set the T4 GPU again, and press **Run all**. Checkpoints live
+in Drive, so a finished training run is reused instead of repeated (merge and GGUF export rerun, ~15 min).
 
 Takes about 45–60 minutes on a free T4. When it's done, download the folder `MyDrive/router_ft_3b/`
 (GGUF ≈ 1.9 GB, adapter ≈ 60 MB) and tell Claude where it is. Test data is not in this notebook;
@@ -94,13 +97,17 @@ VERSIONS = {p: md.version(p) for p in ["torch", "transformers", "peft", "bitsand
 print(VERSIONS)
 """),
         code(f"""
-# 3. Upload router_ft_3b_data.zip and check it
-import hashlib, json, os, zipfile
-from google.colab import files
-os.makedirs("/content/data", exist_ok=True)
-if not os.path.exists("/content/data/manifest.json"):
+# 3. Google Drive (all outputs live there, so a Colab reset loses nothing) + the data zip
+import hashlib, json, os, shutil, zipfile
+from google.colab import drive, files
+drive.mount("/content/drive")
+DRIVE = "/content/drive/MyDrive/router_ft_3b"; os.makedirs(DRIVE, exist_ok=True)
+ZIP = f"{{DRIVE}}/router_ft_3b_data.zip"
+if not os.path.exists(ZIP):
     up = files.upload()
-    zipfile.ZipFile(next(iter(up))).extractall("/content/data")
+    shutil.copy(next(iter(up)), ZIP)
+os.makedirs("/content/data", exist_ok=True)
+zipfile.ZipFile(ZIP).extractall("/content/data")
 manifest = json.load(open("/content/data/manifest.json"))
 assert manifest == {json.dumps(manifest)}, "this zip is not the one the notebook was built for"
 for name, digest in manifest.items():
@@ -118,7 +125,7 @@ CFG = dict(base="{BASE_MODEL}", rank={CFG['lora_parameters']['rank']}, alpha={CF
            layers=list(range({N_LAYERS - CFG['num_layers']}, {N_LAYERS})), lr={CFG['learning_rate']}, micro_batch={CFG['batch_size']},
            grad_accum={CFG['grad_accumulation_steps']}, opt_steps={OPT_STEPS}, save_every={SAVE_EVERY}, max_len={CFG['max_seq_length']}, seed={CFG['seed']},
            targets=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"])
-OUT = "/content/run"; os.makedirs(OUT, exist_ok=True)
+OUT = f"{{DRIVE}}/run"; os.makedirs(OUT, exist_ok=True)  # checkpoints + logs in Drive
 print(CFG)
 """),
         code("""
@@ -184,32 +191,38 @@ assert all(json.loads(ex["messages"][-1]["content"]) == r["label"] for ex, r in 
 """),
         code("""
 # 8. Train (~30 min). A checkpoint every `save_every` optimizer steps, each scored on val.
+#    Skipped if a finished run is already in Drive.
 import time
-params = [p for p in model.parameters() if p.requires_grad]
-opt = torch.optim.Adam(params, lr=CFG["lr"])
-scaler = torch.amp.GradScaler("cuda")
-model.train(); model.config.use_cache = False; tok.padding_side = "right"
-rng = random.Random(CFG["seed"]); order = []
-log, step, micro, t0 = [], 0, 0, time.time()
-while step < CFG["opt_steps"]:
-    if not order:
-        order = list(range(len(train_enc))); rng.shuffle(order)
-    batch = [train_enc[order.pop()] for _ in range(min(CFG["micro_batch"], len(order)))]
-    ids, att, lab = collate(batch)
-    with torch.autocast("cuda", dtype=torch.float16):
-        loss = model(input_ids=ids, attention_mask=att, labels=lab).loss / CFG["grad_accum"]
-    scaler.scale(loss).backward(); micro += 1
-    if micro % CFG["grad_accum"]:
-        continue
-    scaler.step(opt); scaler.update(); opt.zero_grad(set_to_none=True); step += 1
-    if step % 10 == 0:
-        print(f"step {step}/{CFG['opt_steps']}  loss {loss.item() * CFG['grad_accum']:.4f}  {time.time() - t0:.0f}s", flush=True)
-    if step % CFG["save_every"] == 0:
-        model.save_pretrained(f"{OUT}/ckpt-{step:04d}")
-        exact, valid_rate = val_exact()
-        log.append({"step": step, "val_exact": exact, "val_valid": valid_rate, "elapsed_s": round(time.time() - t0)})
-        print("  val", log[-1], flush=True)
-json.dump({"cfg": CFG, "versions": VERSIONS, "log": log}, open(f"{OUT}/train_log.json", "w"), indent=2)
+TRAINED = os.path.exists(f"{OUT}/train_log.json")
+if TRAINED:
+    log = json.load(open(f"{OUT}/train_log.json"))["log"]
+    print("training already finished in an earlier session; reusing", f"{OUT}/train_log.json")
+if not TRAINED:
+    params = [p for p in model.parameters() if p.requires_grad]
+    opt = torch.optim.Adam(params, lr=CFG["lr"])
+    scaler = torch.amp.GradScaler("cuda")
+    model.train(); model.config.use_cache = False; tok.padding_side = "right"
+    rng = random.Random(CFG["seed"]); order = []
+    log, step, micro, t0 = [], 0, 0, time.time()
+    while step < CFG["opt_steps"]:
+        if not order:
+            order = list(range(len(train_enc))); rng.shuffle(order)
+        batch = [train_enc[order.pop()] for _ in range(min(CFG["micro_batch"], len(order)))]
+        ids, att, lab = collate(batch)
+        with torch.autocast("cuda", dtype=torch.float16):
+            loss = model(input_ids=ids, attention_mask=att, labels=lab).loss / CFG["grad_accum"]
+        scaler.scale(loss).backward(); micro += 1
+        if micro % CFG["grad_accum"]:
+            continue
+        scaler.step(opt); scaler.update(); opt.zero_grad(set_to_none=True); step += 1
+        if step % 10 == 0:
+            print(f"step {step}/{CFG['opt_steps']}  loss {loss.item() * CFG['grad_accum']:.4f}  {time.time() - t0:.0f}s", flush=True)
+        if step % CFG["save_every"] == 0:
+            model.save_pretrained(f"{OUT}/ckpt-{step:04d}")
+            exact, valid_rate = val_exact()
+            log.append({"step": step, "val_exact": exact, "val_valid": valid_rate, "elapsed_s": round(time.time() - t0)})
+            print("  val", log[-1], flush=True)
+    json.dump({"cfg": CFG, "versions": VERSIONS, "log": log}, open(f"{OUT}/train_log.json", "w"), indent=2)
 """),
         code("""
 # 9. Pick the checkpoint with the best val exact match (ties -> earlier), same rule as select_checkpoint.py
@@ -218,23 +231,18 @@ BEST = f"{OUT}/ckpt-{best['step']:04d}"
 json.dump({"selected_step": best["step"], "by_step": log, "criterion": "val exact match, ties to earlier"},
           open(f"{OUT}/selection.json", "w"), indent=2)
 print("selected", best)
-del model, opt; import gc; gc.collect(); torch.cuda.empty_cache()
+import gc
+model = None; opt = None; gc.collect(); torch.cuda.empty_cache()
 """),
         code("""
-# 10. Merge the adapter into the fp16 base and save to Google Drive
-from google.colab import drive
-drive.mount("/content/drive")
+# 10. Merge the adapter into the fp16 base (merged model stays on the Colab disk; adapter zip goes to Drive)
 from peft import PeftModel
-import shutil
-DRIVE = "/content/drive/MyDrive/router_ft_3b"; os.makedirs(DRIVE, exist_ok=True)
 from packaging.version import Version
 dtype_kw = "dtype" if Version(VERSIONS["transformers"]) >= Version("4.56") else "torch_dtype"  # renamed in 4.56
 base = AutoModelForCausalLM.from_pretrained(CFG["base"], device_map={"": 0}, **{dtype_kw: torch.float16})
 merged = PeftModel.from_pretrained(base, BEST).merge_and_unload()
 merged.save_pretrained("/content/merged", safe_serialization=True); tok.save_pretrained("/content/merged")
 shutil.make_archive(f"{DRIVE}/adapter_best", "zip", BEST)
-for f in ("train_log.json", "selection.json"):
-    shutil.copy(f"{OUT}/{f}", DRIVE)
 del base, merged; gc.collect(); torch.cuda.empty_cache()
 """),
         code("""
