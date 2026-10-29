@@ -1,0 +1,23 @@
+{
+  "router": "groq",
+  "model": "openai/gpt-oss-120b",
+  "shots": 12,
+  "fewshot_ids": [
+    "train-gpt-oss-120b-055-04",
+    "train-gpt-oss-120b-026-01",
+    "train-gpt-oss-120b-034-06",
+    "train-gpt-oss-120b-032-02",
+    "train-gpt-oss-120b-102-03",
+    "train-gpt-oss-120b-058-06",
+    "train-gpt-oss-120b-015-00",
+    "train-gpt-oss-120b-089-07",
+    "train-gpt-oss-120b-038-06",
+    "train-gpt-oss-120b-100-08",
+    "train-gpt-oss-120b-006-07",
+    "train-gpt-oss-120b-008-07"
+  ],
+  "reasoning_effort": "low",
+  "batch": 10,
+  "split": "test",
+  "test_sha256": "bdf44c0feb6e0f2ff462dd02c0fb13ecfd0bc0592f278a8e62376b64198ac0e5"
+}

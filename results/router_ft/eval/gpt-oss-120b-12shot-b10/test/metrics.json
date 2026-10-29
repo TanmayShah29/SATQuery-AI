@@ -1,0 +1,251 @@
+{
+  "n": 189,
+  "valid_rate": 0.9947089947089947,
+  "exact": 0.7883597883597884,
+  "exact_ci": [
+    0.7301587301587301,
+    0.8412698412698413
+  ],
+  "field_acc": {
+    "intent": 0.9365079365079365,
+    "secondary_intents": 0.9153439153439153,
+    "entities": 0.9047619047619048,
+    "temporal": 0.9841269841269841,
+    "cloud_piercing_required": 0.9735449735449735
+  },
+  "intent_acc_ci": [
+    0.8994708994708994,
+    0.9682539682539683
+  ],
+  "intent_acc_lenient": 0.9417989417989417,
+  "intent_macro_f1": 0.9330421159605828,
+  "intent_macro_f1_ci": [
+    0.8917158415936843,
+    0.9662209872289637
+  ],
+  "intent_f1": {
+    "bitemporal_change": 0.979,
+    "crossmodal_fusion": 0.917,
+    "sar_vqa": 0.984,
+    "visual_grounding": 0.875,
+    "scene_captioning": 0.93,
+    "optical_vqa": 0.914
+  },
+  "intent_confusion": {
+    "bitemporal_change": {
+      "bitemporal_change": 47,
+      "visual_grounding": 1,
+      "invalid": 1
+    },
+    "crossmodal_fusion": {
+      "optical_vqa": 4,
+      "crossmodal_fusion": 22
+    },
+    "sar_vqa": {
+      "sar_vqa": 30,
+      "optical_vqa": 1
+    },
+    "visual_grounding": {
+      "visual_grounding": 21,
+      "optical_vqa": 1
+    },
+    "scene_captioning": {
+      "scene_captioning": 20,
+      "visual_grounding": 3
+    },
+    "optical_vqa": {
+      "optical_vqa": 37,
+      "visual_grounding": 1
+    }
+  },
+  "set_fields": {
+    "secondary_intents": {
+      "precision": 0.6451612903225806,
+      "recall": 0.7142857142857143,
+      "f1": 0.6779661016949152
+    },
+    "entities": {
+      "precision": 0.9655172413793104,
+      "recall": 0.9130434782608695,
+      "f1": 0.9385474860335196
+    }
+  },
+  "by_slice": {
+    "clean": {
+      "n": 35,
+      "exact": 0.8285714285714286,
+      "intent_acc": 1.0
+    },
+    "compound": {
+      "n": 24,
+      "exact": 0.7083333333333334,
+      "intent_acc": 0.8333333333333334
+    },
+    "hint_driven": {
+      "n": 14,
+      "exact": 0.7857142857142857,
+      "intent_acc": 0.8571428571428571
+    },
+    "keyword_trap": {
+      "n": 28,
+      "exact": 0.8571428571428571,
+      "intent_acc": 0.9642857142857143
+    },
+    "negation": {
+      "n": 23,
+      "exact": 0.9565217391304348,
+      "intent_acc": 1.0
+    },
+    "paraphrase": {
+      "n": 43,
+      "exact": 0.6976744186046512,
+      "intent_acc": 0.8837209302325582
+    },
+    "typo_hinglish": {
+      "n": 22,
+      "exact": 0.7272727272727273,
+      "intent_acc": 1.0
+    }
+  },
+  "by_hints": {
+    "bitemporal": {
+      "n": 14,
+      "exact": 0.7857142857142857,
+      "intent_acc": 0.8571428571428571
+    },
+    "cross_modal": {
+      "n": 152,
+      "exact": 0.7828947368421053,
+      "intent_acc": 0.9342105263157895
+    },
+    "single_image": {
+      "n": 23,
+      "exact": 0.8260869565217391,
+      "intent_acc": 1.0
+    }
+  },
+  "latency_ms": {
+    "p50": 123038.8,
+    "p95": 144703.8999999999
+  },
+  "probes": {
+    "n": 20,
+    "valid_rate": 1.0,
+    "exact": 0.6,
+    "exact_ci": [
+      0.4,
+      0.8
+    ],
+    "field_acc": {
+      "intent": 0.95,
+      "secondary_intents": 0.9,
+      "entities": 0.85,
+      "temporal": 0.9,
+      "cloud_piercing_required": 1.0
+    },
+    "intent_acc_ci": [
+      0.85,
+      1.0
+    ],
+    "intent_acc_lenient": 0.95,
+    "intent_macro_f1": 0.9555555555555556,
+    "intent_macro_f1_ci": [
+      0.6458333333333334,
+      1.0
+    ],
+    "intent_f1": {
+      "bitemporal_change": 0.933,
+      "crossmodal_fusion": 1.0,
+      "sar_vqa": 1.0,
+      "visual_grounding": 1.0,
+      "scene_captioning": 1.0,
+      "optical_vqa": 0.8
+    },
+    "intent_confusion": {
+      "bitemporal_change": {
+        "bitemporal_change": 7,
+        "optical_vqa": 1
+      },
+      "crossmodal_fusion": {
+        "crossmodal_fusion": 3
+      },
+      "sar_vqa": {
+        "sar_vqa": 2
+      },
+      "visual_grounding": {
+        "visual_grounding": 3
+      },
+      "scene_captioning": {
+        "scene_captioning": 2
+      },
+      "optical_vqa": {
+        "optical_vqa": 2
+      }
+    },
+    "set_fields": {
+      "secondary_intents": {
+        "precision": 0.75,
+        "recall": 0.75,
+        "f1": 0.75
+      },
+      "entities": {
+        "precision": 0.9375,
+        "recall": 0.8333333333333334,
+        "f1": 0.8823529411764706
+      }
+    },
+    "by_slice": {
+      "clean": {
+        "n": 6,
+        "exact": 0.8333333333333334,
+        "intent_acc": 1.0
+      },
+      "compound": {
+        "n": 3,
+        "exact": 0.3333333333333333,
+        "intent_acc": 1.0
+      },
+      "hint_driven": {
+        "n": 1,
+        "exact": 0.0,
+        "intent_acc": 1.0
+      },
+      "keyword_trap": {
+        "n": 3,
+        "exact": 0.6666666666666666,
+        "intent_acc": 1.0
+      },
+      "negation": {
+        "n": 2,
+        "exact": 1.0,
+        "intent_acc": 1.0
+      },
+      "paraphrase": {
+        "n": 3,
+        "exact": 0.6666666666666666,
+        "intent_acc": 1.0
+      },
+      "typo_hinglish": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.6666666666666666
+      }
+    },
+    "by_hints": {
+      "bitemporal": {
+        "n": 1,
+        "exact": 0.0,
+        "intent_acc": 1.0
+      },
+      "cross_modal": {
+        "n": 19,
+        "exact": 0.631578947368421,
+        "intent_acc": 0.9473684210526315
+      }
+    },
+    "latency_ms": {
+      "p50": 2075.05,
+      "p95": 2109.1
+    }
+  }
+}
