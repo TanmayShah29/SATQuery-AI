@@ -162,14 +162,28 @@ async def health_check():
     except Exception:
         checks["stac_element84"] = "unreachable"
 
+    # Query router (ROUTER_BACKEND): probe the LLM endpoint only when it is in use
+    router_backend = (settings.router_backend or "regex").strip().lower()
+    if router_backend == "llm":
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                resp = await client.get(settings.router_llm_url.split("/v1/")[0] + "/v1/models")
+                checks["router_llm"] = "ok" if resp.status_code == 200 else "unreachable"
+        except Exception:
+            checks["router_llm"] = "unreachable"
+
     overall = "healthy" if all(v == "ok" for v in checks.values()) else "degraded"
     bhuvan_configured = bool(settings.bhuvan_api_key.strip())
     mosdac_configured = bool(settings.mosdac_username.strip() and settings.mosdac_password.strip())
     live_stac = "online" if checks.get("stac_element84") == "ok" else "standby"
 
+    from .agent.llm_router import ROUTER_STATS
+
     return {
         "status": overall,
         "checks": checks,
+        "router": {"backend": router_backend, **({"llm": ROUTER_STATS.snapshot()} if router_backend == "llm" else {})},
         "live_stac_streaming": live_stac,
         "integrations": {
             "bhuvan_wms": {

@@ -11,7 +11,7 @@ import time
 import re
 from pathlib import Path
 from ..config import settings
-from ..agent.router import AgentRouter
+from ..agent.router import AgentRouter, QueryIntent
 from ..agent.evidence_builder import EvidenceBuilder
 
 router = APIRouter(prefix="/api/benchmark", tags=["benchmark"])
@@ -186,7 +186,7 @@ def evaluate_benchmark(req: BenchmarkEvaluateRequest):
     features_count = len(result.get("geojson", {}).get("features", []))
 
     if gt_clean in ("yes", "no"):
-        if intent == AgentRouter.classify_intent("change", {}):
+        if intent == QueryIntent.BITEMPORAL_CHANGE:
             has_change = (result.get("findings", {}).get("surfaceAreaModifiedKm2") or 0.0) > 0.001
             vqa_pred = "yes" if (has_change and features_count > 0) else "no"
         else:

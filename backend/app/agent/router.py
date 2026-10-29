@@ -13,6 +13,18 @@ from typing import Dict, Any, List, Optional, Tuple
 from ..models.registry import MODEL_REGISTRY
 
 
+def _router_backend() -> str:
+    from ..config import settings
+    return (settings.router_backend or "regex").strip().lower()
+
+
+_ROUTER_MODEL_LABEL = {
+    "regex": "AgentRouter (Semantic Remote Sensing Dispatcher)",
+    "llm": "satquery-router (fine-tuned Qwen2.5-1.5B LoRA)",
+    "regex_fallback": "AgentRouter (Semantic Remote Sensing Dispatcher, LLM fallback)",
+}
+
+
 class QueryIntent(str, Enum):
     BITEMPORAL_CHANGE = "bitemporal_change"
     CROSSMODAL_FUSION = "crossmodal_fusion"
@@ -35,6 +47,7 @@ class AgentDispatchPlan:
     cloud_piercing_required: bool
     rationale: str
     dag_steps: List[Dict[str, Any]]
+    routing_source: str = "regex"  # "regex", "llm", or "regex_fallback" (ROUTER_BACKEND=llm but the model failed)
 
 
 class AgentRouter:
@@ -104,6 +117,64 @@ class AgentRouter:
 
     @classmethod
     def classify_intent(cls, query: str, context_hints: Optional[Dict[str, Any]] = None) -> QueryIntent:
+        """Primary intent from the configured router backend (ROUTER_BACKEND, default regex)."""
+        if _router_backend() == "llm":
+            return cls.decide(query, context_hints)["intent"]
+        return cls._classify_intent_regex(query, context_hints)
+
+    @classmethod
+    def decide(cls, query: str, context_hints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """The full routing decision: intent, secondary intents, entities, temporal, cloud piercing.
+
+        ROUTER_BACKEND=llm asks the fine-tuned router model (app/agent/llm_router.py) and falls back
+        to the regex rules on any error, timeout or invalid output; otherwise regex only."""
+        if _router_backend() == "llm":
+            from ..config import settings
+            from .llm_router import get_client
+            ctx = context_hints or {}
+            hints = {"has_bitemporal_pair": bool(ctx.get("has_bitemporal_pair")),
+                     "has_sar_pair": bool(ctx.get("has_sar_pair"))}
+            client = get_client(settings.router_llm_url, settings.router_llm_model, settings.router_llm_timeout_s)
+            llm, reason = client.decide(query, hints)
+            if llm is not None:
+                return {
+                    "intent": QueryIntent(llm["intent"]),
+                    "secondary_intents": [QueryIntent(s) for s in llm["secondary_intents"]],
+                    "entities": list(llm["entities"]),
+                    "temporal": llm["temporal"],
+                    "cloud_piercing_required": llm["cloud_piercing_required"],
+                    "source": "llm",
+                    "fallback_reason": None,
+                }
+            return {**cls._regex_decision(query, context_hints), "source": "regex_fallback", "fallback_reason": reason}
+        return {**cls._regex_decision(query, context_hints), "source": "regex", "fallback_reason": None}
+
+    @classmethod
+    def _regex_decision(cls, query: str, context_hints: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        intent = cls._classify_intent_regex(query, context_hints)
+        cloud_required = intent == QueryIntent.CROSSMODAL_FUSION or any(
+            re.search(p, query.lower()) for p in cls.CROSSMODAL_PATTERNS
+        )
+
+        # Detect secondary intents for compound queries
+        secondary_intents: List[QueryIntent] = []
+        q_lower = query.lower()
+        if intent != QueryIntent.VISUAL_GROUNDING and any(re.search(p, q_lower) for p in cls.GROUNDING_PATTERNS):
+            secondary_intents.append(QueryIntent.VISUAL_GROUNDING)
+        if intent != QueryIntent.SCENE_CAPTIONING and any(re.search(p, q_lower) for p in cls.CAPTIONING_PATTERNS):
+            secondary_intents.append(QueryIntent.SCENE_CAPTIONING)
+        if intent != QueryIntent.CROSSMODAL_FUSION and any(re.search(p, q_lower) for p in cls.CROSSMODAL_PATTERNS):
+            secondary_intents.append(QueryIntent.CROSSMODAL_FUSION)
+        return {
+            "intent": intent,
+            "secondary_intents": secondary_intents,
+            "entities": cls.extract_entities(query),
+            "temporal": cls.extract_temporal(query),
+            "cloud_piercing_required": cloud_required,
+        }
+
+    @classmethod
+    def _classify_intent_regex(cls, query: str, context_hints: Optional[Dict[str, Any]] = None) -> QueryIntent:
         """
         Classifies query into operational path based on linguistic markers and context.
         """
@@ -150,22 +221,13 @@ class AgentRouter:
         Synthesizes a structured agentic execution plan with sensor dispatch and DAG steps.
         """
         ctx = context_data or {}
-        intent = cls.classify_intent(query, ctx)
-        entities = cls.extract_entities(query)
-        temporal = cls.extract_temporal(query)
-        cloud_required = intent == QueryIntent.CROSSMODAL_FUSION or any(
-            re.search(p, query.lower()) for p in cls.CROSSMODAL_PATTERNS
-        )
-
-        # Detect secondary intents for compound queries
-        secondary_intents: List[QueryIntent] = []
-        q_lower = query.lower()
-        if intent != QueryIntent.VISUAL_GROUNDING and any(re.search(p, q_lower) for p in cls.GROUNDING_PATTERNS):
-            secondary_intents.append(QueryIntent.VISUAL_GROUNDING)
-        if intent != QueryIntent.SCENE_CAPTIONING and any(re.search(p, q_lower) for p in cls.CAPTIONING_PATTERNS):
-            secondary_intents.append(QueryIntent.SCENE_CAPTIONING)
-        if intent != QueryIntent.CROSSMODAL_FUSION and any(re.search(p, q_lower) for p in cls.CROSSMODAL_PATTERNS):
-            secondary_intents.append(QueryIntent.CROSSMODAL_FUSION)
+        decision = cls.decide(query, ctx)
+        intent = decision["intent"]
+        entities = decision["entities"]
+        temporal = decision["temporal"]
+        cloud_required = decision["cloud_piercing_required"]
+        secondary_intents: List[QueryIntent] = decision["secondary_intents"]
+        source = decision["source"]
 
         if intent == QueryIntent.BITEMPORAL_CHANGE:
             modality = "bitemporal"
@@ -245,9 +307,10 @@ class AgentRouter:
                 "label": "Agentic Query & Entity Classifier",
                 "type": "intent_parser",
                 "status": "completed",
-                "modelUsed": "AgentRouter (Semantic Remote Sensing Dispatcher)",
+                "modelUsed": _ROUTER_MODEL_LABEL[source],
                 "latencyMs": None,  # Measured dynamically at execution time by EvidenceBuilder
-                "details": f"Classified primary intent as \"{intent.value.upper()}\". Secondary targets: {[s.value for s in secondary_intents] or 'None'}. Target categories: {entities or ['general_scene']}.",
+                "details": f"Classified primary intent as \"{intent.value.upper()}\". Secondary targets: {[s.value for s in secondary_intents] or 'None'}. Target categories: {entities or ['general_scene']}."
+                + (f" LLM router unavailable ({decision['fallback_reason']}); used regex rules." if source == "regex_fallback" else ""),
                 "outputPayload": f"Intent: {intent.value} | Entities: {entities} | Temporal: {temporal or 'None'}",
             },
             {
@@ -318,6 +381,7 @@ class AgentRouter:
             cloud_piercing_required=cloud_required,
             rationale=rationale,
             dag_steps=dag_steps,
+            routing_source=source,
         )
 
     @classmethod

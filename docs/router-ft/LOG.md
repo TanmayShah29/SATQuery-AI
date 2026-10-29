@@ -511,3 +511,57 @@ says so and no longer shows its latency (it included rate-limit waits).
 
 **Probes:** the fine-tuned 1.5B gets 6/20 exact (intent 15/20) vs regex 7/20 (12/20). Its test-set gain does
 not show up on the 20 hand-picked hard cases' full decisions; worth a look in the error analysis (Phase 6).
+
+## 2026-10-29: Phase 5. Serving and the ROUTER_BACKEND switch
+
+**Fixed first:** `backend/.env` now also holds GROQ_API_KEY and OPENROUTER_API_KEY (Phase 2), and the
+backend's pydantic Settings rejected unknown keys, so the app and all test modules failed to load (my
+regression). Settings now ignore unknown keys (38877db); back to 79 passed.
+
+**Serving decision: `mlx_lm.server` with the 4-bit base and the unmerged adapter**, not a GGUF in Ollama.
+That is exactly the evaluated artifact; Phase 4 showed that merging and re-quantising a LoRA can cost 9–21
+points. The GGUF path was also blocked here: llama.cpp's converter is code cloned from GitHub, which the
+sandbox refused to run. mlx-lm can fuse (dequantised fp16 merge works) but can't write GGUF for qwen2. The
+client speaks the OpenAI chat API, so Ollama or llama-server can replace mlx_lm.server later, after a val
+re-check. Note: mlx_lm.server treats the request's `model` as a Hugging Face repo to load, so the default
+`ROUTER_LLM_MODEL` is its alias `default_model`.
+
+**Backend change** (small, default unchanged):
+- `config.py`: `ROUTER_BACKEND` (`regex` default | `llm`), `ROUTER_LLM_URL`, `ROUTER_LLM_MODEL`,
+  `ROUTER_LLM_TIMEOUT_S` (8 s).
+- `agent/llm_router.py`: trained prompt, schema v1.0 check, success-only LRU cache (one request
+  classifies twice), counters and latency for `/api/health`.
+- `agent/router.py`: `AgentRouter.decide` is the single decision point; `classify_intent` and
+  `plan_execution` use it. Regex logic moved unchanged into `_regex_decision` / `_classify_intent_regex`.
+  Plans carry `routing_source`; the DAG's first node names the router and any fallback reason.
+- `routes_benchmark.py`: `classify_intent("change", {})` used as a constant → `QueryIntent.BITEMPORAL_CHANGE`
+  (same value, avoids a model call).
+- **Regex mode is unchanged:** 2,708 plans (train + val + probes × 4 hint settings) are identical to the
+  previous router, and the regex test predictions re-run identically.
+
+**Tests:** `tests/test_llm_router.py`, 13 tests: default is regex with no HTTP call; the LLM decision
+drives the plan; six failure modes fall back (three invalid outputs, non-JSON, timeout, connection error);
+one model call per query; failures are not cached; health reports the backend; prompt and validator parity
+with ml/router_ft (the validator agrees with schema.validate on every train/val label and 3,000 random
+corruptions). Full suite: **92 passed** (79 + 13).
+
+**The deployed system on test, run once** (`routers/backend_router.py`: AgentRouter.decide with
+ROUTER_BACKEND=llm against the running server; fallback rows get the same temporal formatting map as the
+regex baseline). Val first, as a check that serving equals the evaluated model: 68.8 vs 69.6 in-process
+(one timeout).
+
+| | exact | Δ vs regex | valid | fallbacks | p50 / p95 |
+|---|---|---|---|---|---|
+| regex | 31.7 [24.9, 38.1] | | 100 | | 0.17 ms |
+| fine-tuned model alone (Phase 4) | 59.8 [52.4, 66.7] | +28.0 | 89.9 | | 1.8 s |
+| **deployed (model + regex fallback)** | **65.1 [58.2, 72.0]** | **+33.3 [24.9, 41.8], p = 3e-12** | 100 | 19 / 189 | 3.4 s / 5.6 s |
+
+All 19 fallbacks were invalid model output (bad entities 9, cloud without fusion 9, bad temporal 2,
+overlapping), none timeouts; regex got 10 of them right. hint_driven: 78.6 (regex 57.1).
+
+**Found along the way:** on the 8 GB M1, the router and the app's Ollama VLM (qwen2.5:3b, which the
+backend tests load) can't both stay fast: new-query latency went from about 1.5 s to over 8 s, so requests
+hit the timeout and fell back. The scored runs had Ollama unloaded. SERVING.md lists this as a known limit.
+
+**Not done:** constrained decoding (needs a GGUF runtime, see above). The fallback already makes every
+served decision valid; constraining would turn some of the 19 fallbacks into model decisions.

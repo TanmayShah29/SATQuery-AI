@@ -1,0 +1,8 @@
+{
+  "router": "backend",
+  "model": "AgentRouter, ROUTER_BACKEND=llm (fine-tuned 1.5B via mlx_lm.server, regex fallback)",
+  "shots": 0,
+  "prompt": "sft",
+  "split": "test",
+  "test_sha256": "bdf44c0feb6e0f2ff462dd02c0fb13ecfd0bc0592f278a8e62376b64198ac0e5"
+}

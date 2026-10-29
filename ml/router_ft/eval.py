@@ -46,6 +46,10 @@ def make_router(args):
             pred = schema.canonicalize(route(query, hints))
             return pred, {"latency_ms": round((time.perf_counter() - t0) * 1000, 2)}
         return run, None, {"router": "regex", "model": "AgentRouter (backend/app/agent/router.py)", "shots": 0}
+    if args.router == "backend":
+        from routers.backend_router import route as backend_route
+        return backend_route, None, {"router": "backend", "model": "AgentRouter, ROUTER_BACKEND=llm (fine-tuned 1.5B via "
+                                     "mlx_lm.server, regex fallback)", "shots": 0, "prompt": "sft"}
     from routers.llm_router import LLMRouter
     r = LLMRouter(args.router, args.model, shots=args.shots, adapter_path=args.adapter, prompt=args.prompt)
     meta = {"router": args.router, "model": args.model, "shots": len(r.shots),
@@ -212,6 +216,8 @@ def _ci(c):
 def _label(meta):
     if meta["router"] == "regex":
         return "regex AgentRouter"
+    if meta["router"] == "backend":
+        return "**deployed**: AgentRouter, ROUTER_BACKEND=llm (fine-tuned 1.5B + regex fallback)"
     extra = f", reasoning {meta['reasoning_effort']}" if meta.get("reasoning_effort") else ""
     extra += f", {meta['batch']} queries/request" if meta.get("batch") else ""
     if meta.get("adapter"):
@@ -312,7 +318,7 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("--name", required=True)
-    r.add_argument("--router", required=True, choices=["regex", "mlx", "ollama", "groq", "llamacpp"])
+    r.add_argument("--router", required=True, choices=["regex", "mlx", "ollama", "groq", "llamacpp", "backend"])
     r.add_argument("--model")
     r.add_argument("--shots", type=int, default=0, help="0 for zero-shot, anything else for the fixed train few-shot set")
     r.add_argument("--splits", nargs="+", default=["test", "probes"], choices=list(SPLITS))

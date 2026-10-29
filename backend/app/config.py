@@ -64,6 +64,14 @@ try:
         ollama_url: str = Field(default="http://127.0.0.1:11434", alias="OLLAMA_HOST")
         ollama_model: str = Field(default="qwen2.5:3b", alias="OLLAMA_MODEL")
 
+        # Query router: "regex" (default, AgentRouter) or "llm" (fine-tuned model, regex fallback).
+        # See docs/router-ft/ and app/agent/llm_router.py.
+        router_backend: str = Field(default="regex", alias="ROUTER_BACKEND")
+        router_llm_url: str = Field(default="http://127.0.0.1:8090/v1/chat/completions", alias="ROUTER_LLM_URL")
+        # "default_model" = whatever mlx_lm.server was started with; set the model name for Ollama/llama-server
+        router_llm_model: str = Field(default="default_model", alias="ROUTER_LLM_MODEL")
+        router_llm_timeout_s: float = Field(default=8.0, alias="ROUTER_LLM_TIMEOUT_S")
+
         # Auth
         api_key: str = Field(default="", alias="SATQUERY_API_KEY")
 
@@ -120,6 +128,12 @@ except ImportError:
         # ML / Ollama
         ollama_url: str = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
         ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+
+        # Query router (see the pydantic-settings class above)
+        router_backend: str = os.getenv("ROUTER_BACKEND", "regex")
+        router_llm_url: str = os.getenv("ROUTER_LLM_URL", "http://127.0.0.1:8090/v1/chat/completions")
+        router_llm_model: str = os.getenv("ROUTER_LLM_MODEL", "default_model")
+        router_llm_timeout_s: float = float(os.getenv("ROUTER_LLM_TIMEOUT_S", "8.0"))
 
         # Auth
         api_key: str = os.getenv("SATQUERY_API_KEY", "")
