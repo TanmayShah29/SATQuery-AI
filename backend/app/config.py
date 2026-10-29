@@ -74,6 +74,9 @@ try:
             "env_file": str(BASE_DIR / "backend" / ".env"),
             "env_file_encoding": "utf-8",
             "populate_by_name": True,
+            # backend/.env is shared with ml/router_ft (GROQ_API_KEY, OPENROUTER_API_KEY); keys the app
+            # doesn't use must not stop it from starting
+            "extra": "ignore",
         }
 
     @lru_cache
