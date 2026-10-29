@@ -1,0 +1,11 @@
+{
+  "router": "ollama",
+  "model": "satquery-router-3b",
+  "shots": 0,
+  "fewshot_ids": [],
+  "prompt": "sft",
+  "adapter": null,
+  "split": "val",
+  "test_sha256": null,
+  "note": "merged fp16 -> GGUF Q4_K_M export from Colab; val only (lost 21 pts vs nf4, see LOG.md)"
+}

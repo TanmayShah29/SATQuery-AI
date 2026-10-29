@@ -1,0 +1,12 @@
+{
+  "gguf_sha256": "15be48cd7c1c099e58c3510c455000aeeeb33baf36710c6a01212bb665e7400f",
+  "selected_step": 350,
+  "val_exact": 0.6607142857142857,
+  "versions": {
+    "torch": "2.11.0+cu130",
+    "transformers": "5.20.2",
+    "peft": "0.21.2",
+    "bitsandbytes": "0.50.2",
+    "accelerate": "1.15.0"
+  }
+}

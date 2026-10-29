@@ -455,3 +455,34 @@ Probes: see BASELINES.md.
 **3B stretch run (Colab):** `colab/finetune_3b.ipynb` mirrors these settings with QLoRA on a T4
 and exports GGUF Q4_K_M. Training finished; the merge step failed on Colab's old torchao (fixed in
 the notebook, a33a4da) and the session restarted. Recovery in progress; results TBD.
+
+## 2026-10-29: Phase 4 stretch. The 3B fine-tune and a QLoRA export pitfall
+
+**Run:** `colab/finetune_3b.ipynb` on a free T4 (torch 2.11, transformers 5.20.2, peft 0.21.2,
+bitsandbytes 0.50.2). The first run's trained checkpoints were lost: they were on the Colab VM's disk,
+the merge cell failed (old torchao vs new peft), and the VM was recycled. The notebook now writes
+everything to Drive and reuses a finished run (bcfd60c). The second run's val exact match by step
+(`results/router_ft/train/qwen3b-colab/selection.json`): 36.6 / 31.3 / 56.3 / 55.4 / 55.4 / 58.9 /
+**66.1** / 63.4 at steps 50–400. Step 350 selected. GGUF sha256 matches the download (`15be48cd…`).
+
+**Problem: the exported model scored 44.6% on val through Ollama, not 66.1%.** Neither Ollama's JSON
+mode nor the chat template was the cause (raw mode with the exact HF-rendered training prompt also gave
+44.6%). A diagnostic cell in Colab scored the same checkpoint on val:
+
+| Setup | val exact |
+|---|---|
+| A. nf4 4-bit base + adapter (what training saw) | 65.2 |
+| B. fp16 base + adapter | 56.3 |
+| C. fp16 merged | 56.3 |
+| D. merged → GGUF Q4_K_M via Ollama | 44.6 |
+
+So the merge is correct (B = C). **The QLoRA adapter is tuned to the nf4 weights it was trained
+against**: on the fp16 base it loses 9 points, and after re-quantising the merged model to Q4_K_M it
+loses 21. The 1.5B avoided this because it was trained and evaluated on the same MLX 4-bit base,
+adapter unmerged. Lesson for the write-up: with QLoRA, the deployed weights should be the training
+base (or the adapter should be trained on the deployment quantisation), and the exported artifact
+must be re-validated, not assumed equal to the training-time score.
+
+Next: the adapter as a LoRA GGUF applied at runtime on Ollama's own qwen2.5:3b (Q4_K_M, the same
+base as the prompted baseline): `router-3b-lora-f16.gguf`, 13.3 MB. Whichever deployable 3B variant
+is best on val is evaluated once on test.

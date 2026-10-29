@@ -1,0 +1,10 @@
+{
+  "router": "ollama",
+  "model": "satquery-router-3b",
+  "shots": 0,
+  "fewshot_ids": [],
+  "prompt": "sft",
+  "adapter": null,
+  "split": "val",
+  "test_sha256": null
+}
