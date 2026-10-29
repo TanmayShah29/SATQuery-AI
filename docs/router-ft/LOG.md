@@ -565,3 +565,24 @@ hit the timeout and fell back. The scored runs had Ollama unloaded. SERVING.md l
 
 **Not done:** constrained decoding (needs a GGUF runtime, see above). The fallback already makes every
 served decision valid; constraining would turn some of the 19 fallbacks into model decisions.
+
+## 2026-10-29: Phase 6. Write-up
+
+Written: [RESULTS.md](RESULTS.md) (question, headline, caveats first, main table, slices, error analysis,
+the 3B export lesson, cost, limitations, reproduce), [MODEL_CARD.md](MODEL_CARD.md), draft Hugging Face
+cards in `hf/` (not published; licence and whether to publish the test split are open TODOs for the owner),
+a README section, and LinkedIn and resume drafts in [OUTREACH.md](OUTREACH.md). Chart:
+`figures/exact_match.png` from `ml/router_ft/plot_results.py`, which reads the metrics files (no numbers
+typed in). A script cross-checked every percentage in the new documents against the result files; all are
+sourced.
+
+**Error analysis (deployed, 66 wrong of 189):** 37 are wrong only on entities (most often an extra
+`vegetation`, 19 times), intent errors are mostly `crossmodal_fusion → optical_vqa` on implied cloud cover
+(9), and only 8 of the 20 no-entity queries got an empty entity list. That matches the Phase 2 warning that
+training has no empty-entity rows. Probes: deployed 8/20 exact, 14/20 intent (regex 7/20, 12/20).
+
+**Corrected while writing:** a draft said the test set was "labelled by two other models", but
+qwen3.8-27b both wrote the test queries and was one of the two labellers. Fixed before committing.
+
+**Natural next steps** (not done): add empty-entity and implied-obstruction examples to training; try
+constrained decoding once a GGUF export is validated; a 30-row human spot-check of the silver labels.

@@ -126,6 +126,27 @@ npm run dev
 
 ![SatQuery AI Dashboard](sih-info/assets/Dashboard.png)
 
+## 🧭 Fine-Tuned Query Router (optional)
+
+Every query is first routed to a specialist pipeline (change detection, optical/SAR fusion, SAR or optical
+VQA, grounding, captioning). The default router is rule-based (`AgentRouter`, regular expressions). An
+optional fine-tuned Qwen2.5-1.5B router (LoRA, trained with MLX on an 8 GB M1) can replace it, with the
+rules kept as a fallback:
+
+![Exact match by router](docs/router-ft/figures/exact_match.png)
+
+| Router | exact match on 189 test queries | p50 routing latency |
+|---|---|---|
+| Rule-based `AgentRouter` (default) | 31.7% | 0.17 ms |
+| Fine-tuned 1.5B + rule fallback (`ROUTER_BACKEND=llm`) | 65.1% | 3.4 s |
+
+Test labels are silver (two LLM labellers agreed; no human check), so read these as relative, not absolute.
+To enable it, start the model server and set `ROUTER_BACKEND=llm` in `backend/.env`:
+[docs/router-ft/SERVING.md](docs/router-ft/SERVING.md). Write-up, error analysis and limitations:
+[docs/router-ft/RESULTS.md](docs/router-ft/RESULTS.md); model card: [MODEL_CARD.md](docs/router-ft/MODEL_CARD.md).
+
+---
+
 ## 📚 Documentation & Hackathon Dossier
 
 Full technical documentation, architectural specifications, and presentation slide decks are available in the [`sih-info/`](sih-info/README.md) directory:
