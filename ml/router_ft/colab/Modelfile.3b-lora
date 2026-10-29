@@ -1,0 +1,9 @@
+# The 3B LoRA applied at runtime on Ollama's own qwen2.5:3b (Q4_K_M), the base of the prompted baseline.
+# No merge, no re-quantisation of the adapter. Put router-3b-lora-f16.gguf next to this file, then:
+#   ollama create satquery-router-3b-lora -f colab/Modelfile.3b-lora
+# TEMPLATE comes from qwen2.5:3b; the router sends its own system prompt (prepare_sft.SYSTEM).
+FROM qwen2.5:3b
+ADAPTER ./router-3b-lora-f16.gguf
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|endoftext|>"
+PARAMETER temperature 0
