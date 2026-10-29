@@ -75,3 +75,5 @@ ml/router_ft/models/
 results/router_ft/pipeline.pid
 results/router_ft/pipeline_status.json
 ml/router_ft/colab/*.zip
+# Colab downloads; copies live in results/router_ft/train/qwen3b-colab/
+ml/router_ft/colab/*.json
