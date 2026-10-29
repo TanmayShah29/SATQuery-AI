@@ -1,0 +1,10 @@
+{
+  "router": "llamacpp",
+  "model": "qwen2.5:3b Q4_K_M + LoRA (llama.cpp)",
+  "shots": 0,
+  "fewshot_ids": [],
+  "prompt": "sft",
+  "adapter": null,
+  "split": "test",
+  "test_sha256": "bdf44c0feb6e0f2ff462dd02c0fb13ecfd0bc0592f278a8e62376b64198ac0e5"
+}

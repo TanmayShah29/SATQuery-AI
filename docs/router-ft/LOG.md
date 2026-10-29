@@ -486,3 +486,28 @@ must be re-validated, not assumed equal to the training-time score.
 Next: the adapter as a LoRA GGUF applied at runtime on Ollama's own qwen2.5:3b (Q4_K_M, the same
 base as the prompted baseline): `router-3b-lora-f16.gguf`, 13.3 MB. Whichever deployable 3B variant
 is best on val is evaluated once on test.
+
+**Result (2026-10-29).** Ollama 0.35 no longer accepts LoRA adapters (`ADAPTER` → "LoRA adapters are no
+longer supported"), so the adapter ran in llama.cpp 0.8.0 (`brew install llama.cpp`, 21 MB): `llama-server`
+with Ollama's own qwen2.5:3b blob and `--lora router-3b-lora-f16.gguf` (loaded at scale 1.0, alpha/r from
+the GGUF). New `llamacpp` backend in `routers/llm_router.py`.
+
+| 3B variant | val exact |
+|---|---|
+| nf4 + adapter (Colab, training setup) | 65.2–66.1 |
+| merged → Q4_K_M (Ollama) | 44.6 |
+| Q4_K_M base + runtime LoRA (llama.cpp) | **47.3** (best deployable, so it went to test) |
+
+Test, once: **37.6 [30.7, 45.0]**, +5.8 vs regex [−3.2, 14.3], McNemar p = 0.25 (not significant), and below
+the prompted qwen2.5:3b (47.1). **Conclusion:** the 3B QLoRA fine-tune doesn't survive deployment on this
+hardware; the 1.5B (trained and served on the same MLX 4-bit base) is the model to ship. Fixing the 3B would
+mean training on the deployment quantisation (e.g. LoRA on a Q4 base in MLX, which needs more than 8 GB),
+which is out of scope.
+
+**Reference baseline finished** (gpt-oss-120b, 12-shot, 10 queries/request, reasoning low): **78.8
+[73.0, 84.1]** exact. It is an upper reference, not a competitor: it wrote the training data and shares a
+family with gpt-oss-20b, one of the two test labellers, so shared conventions may inflate it. BASELINES.md now
+says so and no longer shows its latency (it included rate-limit waits).
+
+**Probes:** the fine-tuned 1.5B gets 6/20 exact (intent 15/20) vs regex 7/20 (12/20). Its test-set gain does
+not show up on the 20 hand-picked hard cases' full decisions; worth a look in the error analysis (Phase 6).

@@ -1,0 +1,265 @@
+{
+  "n": 189,
+  "valid_rate": 0.7513227513227513,
+  "exact": 0.37566137566137564,
+  "exact_ci": [
+    0.30687830687830686,
+    0.4497354497354497
+  ],
+  "field_acc": {
+    "intent": 0.5343915343915344,
+    "secondary_intents": 0.6825396825396826,
+    "entities": 0.5873015873015873,
+    "temporal": 0.7407407407407407,
+    "cloud_piercing_required": 0.6984126984126984
+  },
+  "intent_acc_ci": [
+    0.4656084656084656,
+    0.6033068783068776
+  ],
+  "intent_acc_lenient": 0.6666666666666666,
+  "intent_macro_f1": 0.6040405996914132,
+  "intent_macro_f1_ci": [
+    0.5255224148158956,
+    0.6709545358547994
+  ],
+  "intent_f1": {
+    "bitemporal_change": 0.639,
+    "crossmodal_fusion": 0.412,
+    "sar_vqa": 0.622,
+    "visual_grounding": 0.809,
+    "scene_captioning": 0.571,
+    "optical_vqa": 0.571
+  },
+  "intent_confusion": {
+    "bitemporal_change": {
+      "invalid": 19,
+      "bitemporal_change": 23,
+      "optical_vqa": 6,
+      "visual_grounding": 1
+    },
+    "crossmodal_fusion": {
+      "optical_vqa": 10,
+      "crossmodal_fusion": 7,
+      "invalid": 9
+    },
+    "sar_vqa": {
+      "optical_vqa": 11,
+      "sar_vqa": 14,
+      "invalid": 5,
+      "crossmodal_fusion": 1
+    },
+    "visual_grounding": {
+      "visual_grounding": 19,
+      "optical_vqa": 2,
+      "invalid": 1
+    },
+    "scene_captioning": {
+      "scene_captioning": 10,
+      "optical_vqa": 3,
+      "invalid": 8,
+      "visual_grounding": 2
+    },
+    "optical_vqa": {
+      "optical_vqa": 28,
+      "scene_captioning": 2,
+      "invalid": 5,
+      "visual_grounding": 3
+    }
+  },
+  "set_fields": {
+    "secondary_intents": {
+      "precision": 0.6428571428571429,
+      "recall": 0.32142857142857145,
+      "f1": 0.4285714285714286
+    },
+    "entities": {
+      "precision": 0.8402366863905325,
+      "recall": 0.7717391304347826,
+      "f1": 0.8045325779036826
+    }
+  },
+  "by_slice": {
+    "clean": {
+      "n": 35,
+      "exact": 0.4,
+      "intent_acc": 0.6
+    },
+    "compound": {
+      "n": 24,
+      "exact": 0.25,
+      "intent_acc": 0.625
+    },
+    "hint_driven": {
+      "n": 14,
+      "exact": 0.2857142857142857,
+      "intent_acc": 0.35714285714285715
+    },
+    "keyword_trap": {
+      "n": 28,
+      "exact": 0.5357142857142857,
+      "intent_acc": 0.6785714285714286
+    },
+    "negation": {
+      "n": 23,
+      "exact": 0.5217391304347826,
+      "intent_acc": 0.5652173913043478
+    },
+    "paraphrase": {
+      "n": 43,
+      "exact": 0.3488372093023256,
+      "intent_acc": 0.4186046511627907
+    },
+    "typo_hinglish": {
+      "n": 22,
+      "exact": 0.22727272727272727,
+      "intent_acc": 0.45454545454545453
+    }
+  },
+  "by_hints": {
+    "bitemporal": {
+      "n": 14,
+      "exact": 0.2857142857142857,
+      "intent_acc": 0.35714285714285715
+    },
+    "cross_modal": {
+      "n": 152,
+      "exact": 0.39473684210526316,
+      "intent_acc": 0.5723684210526315
+    },
+    "single_image": {
+      "n": 23,
+      "exact": 0.30434782608695654,
+      "intent_acc": 0.391304347826087
+    }
+  },
+  "latency_ms": {
+    "p50": 3792.4,
+    "p95": 6291.419999999998
+  },
+  "probes": {
+    "n": 20,
+    "valid_rate": 0.5,
+    "exact": 0.15,
+    "exact_ci": [
+      0.0,
+      0.35
+    ],
+    "field_acc": {
+      "intent": 0.3,
+      "secondary_intents": 0.4,
+      "entities": 0.3,
+      "temporal": 0.45,
+      "cloud_piercing_required": 0.5
+    },
+    "intent_acc_ci": [
+      0.1,
+      0.5
+    ],
+    "intent_acc_lenient": 0.5,
+    "intent_macro_f1": 0.38730158730158726,
+    "intent_macro_f1_ci": [
+      0.13327380952380952,
+      0.5396825396825397
+    ],
+    "intent_f1": {
+      "bitemporal_change": 0.0,
+      "crossmodal_fusion": 0.4,
+      "sar_vqa": 0.667,
+      "visual_grounding": 0.857,
+      "scene_captioning": 0.0,
+      "optical_vqa": 0.4
+    },
+    "intent_confusion": {
+      "bitemporal_change": {
+        "invalid": 5,
+        "optical_vqa": 1,
+        "visual_grounding": 1,
+        "crossmodal_fusion": 1
+      },
+      "crossmodal_fusion": {
+        "invalid": 2,
+        "crossmodal_fusion": 1
+      },
+      "sar_vqa": {
+        "sar_vqa": 1,
+        "optical_vqa": 1
+      },
+      "visual_grounding": {
+        "visual_grounding": 3
+      },
+      "scene_captioning": {
+        "invalid": 2
+      },
+      "optical_vqa": {
+        "invalid": 1,
+        "optical_vqa": 1
+      }
+    },
+    "set_fields": {
+      "secondary_intents": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "entities": {
+        "precision": 0.7692307692307693,
+        "recall": 0.5555555555555556,
+        "f1": 0.6451612903225806
+      }
+    },
+    "by_slice": {
+      "clean": {
+        "n": 6,
+        "exact": 0.3333333333333333,
+        "intent_acc": 0.5
+      },
+      "compound": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "hint_driven": {
+        "n": 1,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "keyword_trap": {
+        "n": 3,
+        "exact": 0.3333333333333333,
+        "intent_acc": 0.3333333333333333
+      },
+      "negation": {
+        "n": 2,
+        "exact": 0.0,
+        "intent_acc": 0.5
+      },
+      "paraphrase": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "typo_hinglish": {
+        "n": 3,
+        "exact": 0.0,
+        "intent_acc": 0.3333333333333333
+      }
+    },
+    "by_hints": {
+      "bitemporal": {
+        "n": 1,
+        "exact": 0.0,
+        "intent_acc": 0.0
+      },
+      "cross_modal": {
+        "n": 19,
+        "exact": 0.15789473684210525,
+        "intent_acc": 0.3157894736842105
+      }
+    },
+    "latency_ms": {
+      "p50": 3696.35,
+      "p95": 4730.050000000001
+    }
+  }
+}

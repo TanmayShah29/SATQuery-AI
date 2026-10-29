@@ -20,6 +20,7 @@ import generate
 import schema
 from common import TRAIN, read_jsonl
 
+LLAMACPP_PORT = 8081
 FEWSHOT_SEED = 3
 FEWSHOT_PER_INTENT = 2
 
@@ -94,7 +95,7 @@ class LLMRouter:
         elif backend == "groq":
             self._headers = generate._client_headers()
             self.max_tokens = max(max_tokens, 6000)  # gpt-oss reasoning tokens count against max_tokens; batches need more
-        elif backend != "ollama":
+        elif backend not in ("ollama", "llamacpp"):
             raise ValueError(backend)
 
     def _complete(self, messages) -> str:
@@ -110,6 +111,11 @@ class LLMRouter:
                 "options": {"temperature": 0, "num_ctx": 4096, "num_predict": self.max_tokens}})
             r.raise_for_status()
             return r.json()["message"]["content"]
+        if self.backend == "llamacpp":  # a local llama-server, e.g. a base GGUF + a LoRA applied at runtime
+            r = httpx.post(f"http://127.0.0.1:{LLAMACPP_PORT}/v1/chat/completions", timeout=300, json={
+                "messages": messages, "temperature": 0, "max_tokens": self.max_tokens})
+            r.raise_for_status()
+            return r.json()["choices"][0]["message"]["content"]
         text, _ = generate.call_groq(self.model, messages, self._headers, temperature=0, max_tokens=self.max_tokens)
         return text
 

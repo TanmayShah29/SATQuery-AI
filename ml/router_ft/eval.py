@@ -216,6 +216,8 @@ def _label(meta):
     extra += f", {meta['batch']} queries/request" if meta.get("batch") else ""
     if meta.get("adapter"):
         return f"**fine-tuned** {meta['model'].split('/')[-1]} + LoRA ({meta['router']}{', hint rule in code' if meta.get('hint_override') else ''})"
+    if meta.get("prompt") == "sft":  # fine-tuned model served as one artifact (GGUF / runtime LoRA)
+        return f"**fine-tuned** {meta['model']}"
     extra += ", hint rule in code" if meta.get("hint_override") else ""
     return f"{meta['model']} ({meta['router']}, {meta['shots']}-shot{extra})"
 
@@ -257,9 +259,12 @@ def cmd_report(args):
                  f"[{s['intent_macro_f1_ci'][0]:.3f}, {s['intent_macro_f1_ci'][1]:.3f}] | "
                  f"{s['set_fields']['secondary_intents']['f1']:.3f} | {s['set_fields']['entities']['f1']:.3f} | "
                  f"{_pct(s['field_acc']['temporal'])} | {_pct(s['field_acc']['cloud_piercing_required'])} | "
-                 f"{s['latency_ms']['p50']:.{0 if s['latency_ms']['p50'] >= 10 else 2}f} |")
-    L += ["", "Latency: regex runs in-process; MLX and Ollama run on this 8 GB M1; Groq is a network call "
-               "to a hosted model, so its latency is not comparable.", ""]
+                 f"{'–' if metas[k].get('batch') else format(s['latency_ms']['p50'], '.0f' if s['latency_ms']['p50'] >= 10 else '.2f')} |")
+    L += ["", "Latency: regex runs in-process; MLX, Ollama and llama.cpp run on this 8 GB M1. The Groq reference "
+               "is a hosted model called in batches through rate-limit waits, so it has no comparable latency (–).", "",
+          "**Reference caveat:** gpt-oss-120b wrote the training data and comes from the same model family as "
+          "gpt-oss-20b, one of the two models whose agreement defines the silver test labels. Its score is an upper "
+          "reference, not a fair competitor, and may be inflated by shared conventions with the labeller.", ""]
 
     if "regex" in scored:
         L += ["## Difference from regex (exact match)", "",
@@ -307,7 +312,7 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("--name", required=True)
-    r.add_argument("--router", required=True, choices=["regex", "mlx", "ollama", "groq"])
+    r.add_argument("--router", required=True, choices=["regex", "mlx", "ollama", "groq", "llamacpp"])
     r.add_argument("--model")
     r.add_argument("--shots", type=int, default=0, help="0 for zero-shot, anything else for the fixed train few-shot set")
     r.add_argument("--splits", nargs="+", default=["test", "probes"], choices=list(SPLITS))
